@@ -2,8 +2,11 @@
   "use strict";
 
   const MIN_PLAYERS = 3;
-  const STORAGE_KEY = "imposter-settings";
-  const CUSTOM_KEY = "imposter-custom-v1";
+  const STORAGE_KEY = "blacksheep-settings";
+  const CUSTOM_KEY = "blacksheep-custom-v1";
+  // Saved data from before the game was renamed: copied to the new keys once, then removed.
+  const LEGACY_KEYS = { settings: "imposter-settings", custom: "imposter-custom-v1" };
+  migrateStorage();
   const MIN_CUSTOM_WORDS = 2;
   const DEFAULT_CUSTOM_NAME = "My words";
   const DISCUSS_SECONDS = 180;
@@ -19,8 +22,27 @@
   const usedWords = new Set(); // "categoryKey:wordIndex" drawn this session
 
   // ---------- storage ----------
+  function migrateStorage() {
+    try {
+      const oldSettings = localStorage.getItem(LEGACY_KEYS.settings);
+      if (oldSettings !== null) {
+        if (localStorage.getItem(STORAGE_KEY) === null) {
+          const s = JSON.parse(oldSettings) || {};
+          if (s.blackSheep == null && s.imposters != null) s.blackSheep = s.imposters;
+          delete s.imposters;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+        }
+        localStorage.removeItem(LEGACY_KEYS.settings);
+      }
+      const oldCustom = localStorage.getItem(LEGACY_KEYS.custom);
+      if (oldCustom !== null) {
+        if (localStorage.getItem(CUSTOM_KEY) === null) localStorage.setItem(CUSTOM_KEY, oldCustom);
+        localStorage.removeItem(LEGACY_KEYS.custom);
+      }
+    } catch (e) { /* storage unavailable: nothing to migrate */ }
+  }
   function loadSettings() {
-    const fallback = { players: 4, imposters: 1, hint: true, names: [], categories: null };
+    const fallback = { players: 4, blackSheep: 1, hint: true, names: [], categories: null };
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
       return normalize(saved ? Object.assign(fallback, saved) : fallback);
@@ -122,15 +144,15 @@
     parent.appendChild(p);
   }
   function categoryLabel(cat) { return "Category: " + cat.name + (cat.nameEn ? " (" + cat.nameEn + ")" : ""); }
-  function maxImposters(players) { return Math.max(1, Math.floor((players - 1) / 2)); }
+  function maxBlackSheep(players) { return Math.max(1, Math.floor((players - 1) / 2)); }
   function playerName(i) { return (settings.names[i] || "").trim() || "Player " + (i + 1); }
 
   // ---------- setup screen ----------
   function renderSetup(focusIndex) {
     settings.players = settings.names.length;
-    settings.imposters = Math.min(settings.imposters, maxImposters(settings.players));
+    settings.blackSheep = Math.min(settings.blackSheep, maxBlackSheep(settings.players));
     $("players-count").textContent = settings.players;
-    $("imposters-count").textContent = settings.imposters;
+    $("sheep-count").textContent = settings.blackSheep;
     $("opt-hint").checked = settings.hint;
 
     const box = $("names");
@@ -178,7 +200,7 @@
   document.querySelectorAll("[data-step]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const dir = Number(btn.dataset.dir);
-      settings.imposters = Math.min(maxImposters(settings.players), Math.max(1, settings.imposters + dir));
+      settings.blackSheep = Math.min(maxBlackSheep(settings.players), Math.max(1, settings.blackSheep + dir));
       saveSettings();
       renderSetup();
     });
@@ -508,7 +530,7 @@
     });
 
     field("wordEn", "Thanglish", "How you'd type it in English letters.", looksLatin(w.word) ? w.word : "For example, Maambazham");
-    field("hint", "Hint for the imposter", "One or two words that hint without giving it away.", "For example, பழம்");
+    field("hint", "Hint for the black sheep", "One or two words that hint without giving it away.", "For example, பழம்");
     field("hintEn", "Hint in Thanglish", "", "For example, Pazham");
     inputs.slice(1).forEach((input) => input.addEventListener("input", () => {
       w[input.dataset.field] = input.value.trim();
@@ -675,11 +697,11 @@
     const pick = pickWord();
     const entry = pick.word;
     const order = shuffle([...Array(settings.players).keys()]);
-    const imposters = new Set(order.slice(0, settings.imposters));
+    const blackSheep = new Set(order.slice(0, settings.blackSheep));
     round = {
       entry: entry,
       category: pick.category,
-      imposters: imposters,
+      blackSheep: blackSheep,
       current: 0,
       firstSpeaker: randInt(settings.players)
     };
@@ -699,14 +721,14 @@
   }
 
   function showReveal() {
-    const isImposter = round.imposters.has(round.current);
+    const isBlackSheep = round.blackSheep.has(round.current);
     const card = $("reveal-card");
-    card.classList.toggle("imposter", isImposter);
+    card.classList.toggle("black-sheep", isBlackSheep);
     const hintBox = $("reveal-hint");
     hintBox.innerHTML = "";
-    if (isImposter) {
-      $("reveal-label").textContent = playerName(round.current) + ", you are the…";
-      $("reveal-word").textContent = "Imposter! 🤫";
+    if (isBlackSheep) {
+      $("reveal-label").textContent = playerName(round.current) + ", you are the";
+      $("reveal-word").textContent = "Black Sheep";
       $("reveal-translit").textContent = "";
       if (settings.hint && round.entry.hint) {
         addLine(hintBox, "muted", "Your hint");
@@ -787,18 +809,18 @@
   }
 
   function showResult(votedOut) {
-    const caught = round.imposters.has(votedOut);
+    const caught = round.blackSheep.has(votedOut);
     $("screen-result").classList.toggle("caught", caught);
     $("result-emoji").textContent = caught ? "🎉" : "😈";
-    $("result-title").textContent = caught ? "Imposter caught!" : "The imposter escaped!";
+    $("result-title").textContent = caught ? "Black sheep caught" : "The black sheep escaped";
     $("result-detail").textContent = caught
-      ? playerName(votedOut) + " was the imposter. Everyone else wins!"
-      : playerName(votedOut) + " was not the imposter. The imposter wins!";
+      ? playerName(votedOut) + " was the black sheep. Everyone else wins!"
+      : playerName(votedOut) + " was not the black sheep. The black sheep wins!";
     $("result-word").textContent = round.entry.word;
     $("result-translit").textContent = round.entry.wordEn;
     $("result-category").textContent = categoryLabel(round.category);
-    const names = [...round.imposters].sort((a, b) => a - b).map(playerName).join(", ");
-    $("result-imposters").textContent = (round.imposters.size > 1 ? "Imposters: " : "Imposter: ") + names;
+    const names = [...round.blackSheep].sort((a, b) => a - b).map(playerName).join(", ");
+    $("result-sheep").textContent = "Black sheep: " + names;
     show("result");
     fitAll();
   }

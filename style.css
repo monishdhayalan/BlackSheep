@@ -1,4 +1,4 @@
-/* Palette: turmeric ground, maroon ink, kumkum red for the imposter,
+/* Palette: turmeric ground, maroon ink, kumkum red for the black sheep,
    banana-leaf green for a catch, leaf-white panels. */
 :root {
   --turmeric: #F2B23A;
@@ -211,12 +211,12 @@ h1 {
 .hint p { margin: 2px 0; }
 .hint-word { font-family: var(--display); font-size: var(--t-2xl); font-weight: 800; line-height: 1.1; margin-top: 8px !important; white-space: nowrap; }
 
-.reveal.imposter { background: var(--kumkum); border-color: var(--ink); color: var(--paper); }
-.reveal.imposter .secret,
-.reveal.imposter .hint-word { color: var(--paper); }
-.reveal.imposter .muted,
-.reveal.imposter .translit { color: rgba(255, 249, 238, .8); }
-.reveal.imposter .hint { border-top-color: rgba(255, 249, 238, .35); }
+.reveal.black-sheep { background: var(--kumkum); border-color: var(--ink); color: var(--paper); }
+.reveal.black-sheep .secret,
+.reveal.black-sheep .hint-word { color: var(--paper); }
+.reveal.black-sheep .muted,
+.reveal.black-sheep .translit { color: rgba(255, 249, 238, .8); }
+.reveal.black-sheep .hint { border-top-color: rgba(255, 249, 238, .35); }
 
 .first { display: flex; flex-direction: column; margin-top: 10px; color: var(--ink-soft); }
 .first strong { font-family: var(--display); font-size: var(--t-2xl); font-weight: 800; color: var(--ink); line-height: 1.1; overflow-wrap: anywhere; }

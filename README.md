@@ -1,6 +1,6 @@
-# Tamil Imposter
+# Black Sheep
 
-A pass-the-phone imposter party game with Tamil words. Everyone in the group gets the same secret Tamil word except the imposter, who only gets a hint. You take turns giving clues, then vote on who the imposter is. The interface is in English, and every Tamil word and hint has its Thanglish written right below it, so anyone can read it.
+A pass-the-phone party game with Tamil words. Everyone in the group gets the same secret Tamil word except the black sheep, who only gets a hint. You take turns giving clues, then vote on who the black sheep is. The interface is in English, and every Tamil word and hint has its Thanglish written right below it, so anyone can read it.
 
 **Play:** https://monishdhayalan.github.io/ImposterGame/ (live once GitHub Pages is turned on for this repo)
 
@@ -8,9 +8,9 @@ A pass-the-phone imposter party game with Tamil words. Everyone in the group get
 
 1. Add the players' names and pick the categories you want.
 2. Pass the phone around. Each player taps to see their word in private, then hides it.
-3. Everyone gets the same word, except the imposter, who sees a hint instead.
+3. Everyone gets the same word, except the black sheep, who sees a hint instead.
 4. Take turns giving one clue about the word without saying it, then discuss.
-5. Vote for who you think the imposter is. Catch them and everyone else wins. If they escape, the imposter wins.
+5. Vote for who you think the black sheep is. Catch them and everyone else wins. If they escape, the black sheep wins.
 
 ## Run it locally
 
@@ -30,7 +30,7 @@ The easiest way to add words is from inside the game. You don't need to write an
 
 1. On the setup screen, under **Categories**, tap **+ New category**.
 2. Give it a name and a **Name in Thanglish**.
-3. Add your words. Tap **Add details** on each word to fill in its Thanglish, a hint for the imposter and the hint's Thanglish.
+3. Add your words. Tap **Add details** on each word to fill in its Thanglish, a hint for the black sheep and the hint's Thanglish.
 4. Tap **Export for contributing**. Fix anything the checks point out, then tap **Copy** (or **Download file**).
 
 The export looks like this, in the same format as `words.js`:

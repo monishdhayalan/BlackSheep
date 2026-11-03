@@ -1,6 +1,6 @@
-# Tamil Imposter
+# Black Sheep
 
-Pass-the-phone imposter party game with Tamil words. Static site (index.html, style.css, app.js, words.js), no build step, hosted on GitHub Pages from `main` (root).
+Black Sheep: a pass-the-phone party game with Tamil words. Always call the game "Black Sheep" and the hidden player "the black sheep", in code, copy and docs alike. Static site (index.html, style.css, app.js, words.js), no build step, hosted on GitHub Pages from `main` (root).
 
 **Always read and follow [DESIGN.md](DESIGN.md) before making any change**, whether to the UI, copy, layout or features. Keep DESIGN.md up to date in the same commit when you add a colour, component, screen or rule.
 

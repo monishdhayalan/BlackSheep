@@ -1,5 +1,5 @@
 // Word list: 8 Tamil Nadu categories, 35 words each.
-// Each word has Tamil script + Thanglish, and a short Tamil hint (+ Thanglish) given to the imposter.
+// Each word has Tamil script + Thanglish, and a short Tamil hint (+ Thanglish) given to the black sheep.
 const CATEGORIES = [
   {
     name: "உணவு", nameEn: "Unavu",

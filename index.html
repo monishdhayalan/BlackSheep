@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#F2B23A">
-  <title>Tamil Imposter</title>
+  <title>Black Sheep</title>
+  <meta name="description" content="Black Sheep: a pass-the-phone party game with Tamil words. Everyone knows the secret word except the black sheep.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+Thambi+2:wght@500;700;800&family=Hind+Madurai:wght@400;600&display=swap" rel="stylesheet">
@@ -16,8 +17,8 @@
     <!-- Home / setup -->
     <section id="screen-setup" class="screen active">
       <header class="hero">
-        <h1>Tamil<br>Imposter</h1>
-        <p class="sub">One phone, one secret Tamil word. Everyone knows it except the imposter.</p>
+        <h1>Black<br>Sheep</h1>
+        <p class="sub">One phone, one secret Tamil word. Everyone knows it except the black sheep.</p>
       </header>
 
       <div class="panel">
@@ -39,15 +40,15 @@
 
       <div class="panel">
         <label class="row">
-          <span>Imposters</span>
+          <span>Black sheep</span>
           <div class="stepper">
-            <button type="button" data-step="imposters" data-dir="-1" aria-label="Fewer imposters">−</button>
-            <output id="imposters-count">1</output>
-            <button type="button" data-step="imposters" data-dir="1" aria-label="More imposters">+</button>
+            <button type="button" data-step="sheep" data-dir="-1" aria-label="Fewer black sheep">−</button>
+            <output id="sheep-count">1</output>
+            <button type="button" data-step="sheep" data-dir="1" aria-label="More black sheep">+</button>
           </div>
         </label>
         <label class="row toggle">
-          <span>Give the imposter a hint</span>
+          <span>Give the black sheep a hint</span>
           <input type="checkbox" id="opt-hint" checked>
         </label>
       </div>
@@ -77,7 +78,7 @@
 
       <div class="panel">
         <h2>Words <span class="count" id="custom-count">0</span></h2>
-        <p class="muted small">Any language works. Tap Edit on a word to add its Thanglish or a hint for the imposter.</p>
+        <p class="muted small">Any language works. Tap Edit on a word to add its Thanglish or a hint for the black sheep.</p>
         <div class="quick-add">
           <input type="text" id="custom-add" maxlength="40" placeholder="Type a word" aria-label="New word" enterkeyhint="done">
           <button type="button" id="btn-custom-add" class="btn primary">Add</button>
@@ -124,10 +125,10 @@
         <h2>How to play</h2>
         <ol>
           <li>Pass the phone around. Each player privately looks at their word.</li>
-          <li>Everyone gets the same Tamil word. The imposter doesn't know it, and may only get a hint.</li>
+          <li>Everyone gets the same Tamil word. The black sheep doesn't know it, and may only get a hint.</li>
           <li>Take turns saying one clue about the word. Don't say the word itself!</li>
-          <li>After discussing, vote for who you think the imposter is.</li>
-          <li>Catch the imposter and everyone else wins. If they escape, the imposter wins!</li>
+          <li>After discussing, vote for who you think the black sheep is.</li>
+          <li>Catch the black sheep and everyone else wins. If they escape, the black sheep wins!</li>
         </ol>
       </div>
       <div class="actions">
@@ -180,7 +181,7 @@
     <!-- Vote -->
     <section id="screen-vote" class="screen">
       <header class="screen-head">
-        <h2>Who is the imposter?</h2>
+        <h2>Who is the black sheep?</h2>
         <p class="muted small">Tap the player with the most votes</p>
       </header>
       <div id="vote-list" class="vote-list"></div>
@@ -197,7 +198,7 @@
           <p class="secret small-secret" id="result-word"></p>
           <p class="translit" id="result-translit"></p>
           <p class="muted small" id="result-category"></p>
-          <p class="muted small" id="result-imposters"></p>
+          <p class="muted small" id="result-sheep"></p>
         </div>
       </div>
       <div class="actions">

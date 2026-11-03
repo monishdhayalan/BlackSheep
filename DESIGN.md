@@ -1,17 +1,17 @@
-# Tamil Imposter: design guide
+# Black Sheep: design guide
 
 Read this before every change to the game, including small ones. If a change needs something this file doesn't cover, follow the closest existing pattern and add it here in the same commit.
 
 ## What the game is
 
-Tamil Imposter is a pass-the-phone party game for a group in one room. Everyone gets the same secret Tamil word except the imposter, who gets a hint. One phone travels around the group, and nobody joins from their own device. It's a static site (plain HTML, CSS and JS, no build step) hosted on GitHub Pages.
+Black Sheep is a pass-the-phone party game for a group in one room. Everyone gets the same secret Tamil word except the black sheep, who gets a hint. Always say "Black Sheep" for the game and "the black sheep" for the hidden player (plural is also "black sheep"), in copy, code and docs. On the reveal card the role is a heading: "Black Sheep". One phone travels around the group, and nobody joins from their own device. It's a static site (plain HTML, CSS and JS, no build step) hosted on GitHub Pages.
 
 **Main platform: phones.** Design at 375px first, then check 320px and 390px. Desktop only needs to look reasonable: the content column is capped at 460px and centred.
 
 ## Language rules
 
 - **The whole interface is in English.** That covers buttons, titles, instructions and messages.
-- **Only the game content is in Tamil:** the secret words, the imposter hints and the category names.
+- **Only the game content is in Tamil:** the secret words, the black sheep's hints and the category names.
 - **Every Tamil word, hint and category name has its Thanglish right below it** (how a Tamilian would type it in English letters, like "Yaanai", not a formal transliteration). If a custom word has no Thanglish, the line is hidden, never left empty.
 - **The secret word stays on one line.** `.secret` and `.hint-word` use `white-space: nowrap`, and `fitText()` / `fitAll()` in app.js shrink long words to fit (minimum 16px). Any new place that shows a word must use the same pattern.
 
@@ -29,8 +29,8 @@ The look borrows from Tamil street visuals: hand-painted cinema banners, kolam d
 | `--turmeric-deep` | `#E09A1F` | Darker turmeric accents |
 | `--ink` | `#3A0B14` | Text, outlines, primary buttons, selected chips (maroon) |
 | `--ink-soft` | `#6E3A2C` | Secondary text, placeholders, dashed outlines |
-| `--kumkum` | `#C8102E` | The imposter card, the "imposter escaped" result, errors, offset shadows on primary buttons and headings |
-| `--leaf` | `#1E6B3A` | The "imposter caught" result only |
+| `--kumkum` | `#C8102E` | The black sheep card, the "black sheep escaped" result, errors, offset shadows on primary buttons and headings |
+| `--leaf` | `#1E6B3A` | The "black sheep caught" result only |
 | `--paper` | `#FFF9EE` | Panels, cards, text on kumkum |
 | `--line` | `rgba(58,11,20,.14)` | Dividers and quiet borders |
 
@@ -47,7 +47,7 @@ Turmeric with a kolam dot grid: `radial-gradient` dots at 22px spacing, fixed. D
 - Both are loaded from Google Fonts in index.html. Don't add a third family.
 - Type scale is 1.25 (`--t-sm` .875rem, `--t-md` 1rem, `--t-lg` 1.25rem, `--t-xl` 1.563rem, `--t-2xl` 2.441rem, `--t-3xl` 3.815rem). Pick from the scale and don't invent sizes. The secret word may use `clamp()` and `fitText()`.
 - Headings use sentence case. No all-caps labels, no small eyebrow labels above headings, and no single highlighted word inside a heading.
-- The banner text treatment (`text-shadow: 3px 3px 0 var(--kumkum)`) is only for the "Tamil Imposter" title and the player name on the pass screen.
+- The banner text treatment (`text-shadow: 3px 3px 0 var(--kumkum)`) is only for the "Black Sheep" title and the player name on the pass screen.
 
 ### Shapes and depth
 
@@ -63,14 +63,14 @@ Turmeric with a kolam dot grid: `radial-gradient` dots at 22px spacing, fixed. D
 - **The main action sits in the sticky `.actions` bar at the bottom of every screen**, within thumb reach. There's one primary button per screen, and an optional ghost button next to or under it.
 - Tap targets are at least 44px, and main buttons are 56–60px tall.
 - Respect the notch and home bar with `env(safe-area-inset-*)`.
-- Setup screen order: title, Players, Categories (Select all / Deselect all at the top right), Imposters and hint switch, "How to play" link, then the sticky Start game.
+- Setup screen order: title, Players, Categories (Select all / Deselect all at the top right), Black sheep count and hint switch, "How to play" link, then the sticky Start game.
 - Players are numbered in the order the phone is passed.
 - Start game is disabled, with a short kumkum note above it, until at least one category is selected.
 - Panels and screens are left aligned. Only the pass, reveal, discuss and result "stage" moments are centred.
 
 ## Components to reuse
 
-Use these before creating anything new: `.panel`, `.panel-head` with `.mini` text buttons, `.btn` / `.btn.primary` / `.btn.ghost` / `.btn.big`, `.chip` / `.chip.on` / `.chip-sub`, `.own-chip` + `.chip-edit` (custom categories), `.row` + `.toggle` switch, `.stepper`, `.name-row`, `.field`, `.quick-add`, `.word-row` + `.word-edit`, `.word-card` (edit one word), `.field-label` / `.field-help`, `.saved-status`, `.export-box` + `.export-checks` + `.export-text` (export for contributing), `.text-link` (inline link), `.link` / `.link.danger`, `.back`, `.banner` / `.banner.reveal` / `.reveal.imposter`, `.translit`, `.hint` / `.hint-word`, `.actions`, `.stage`, `.progress`.
+Use these before creating anything new: `.panel`, `.panel-head` with `.mini` text buttons, `.btn` / `.btn.primary` / `.btn.ghost` / `.btn.big`, `.chip` / `.chip.on` / `.chip-sub`, `.own-chip` + `.chip-edit` (custom categories), `.row` + `.toggle` switch, `.stepper`, `.name-row`, `.field`, `.quick-add`, `.word-row` + `.word-edit`, `.word-card` (edit one word), `.field-label` / `.field-help`, `.saved-status`, `.export-box` + `.export-checks` + `.export-text` (export for contributing), `.text-link` (inline link), `.link` / `.link.danger`, `.back`, `.banner` / `.banner.reveal` / `.reveal.black-sheep`, `.translit`, `.hint` / `.hint-word`, `.actions`, `.stage`, `.progress`.
 
 ### Editing one item in a list
 
@@ -110,12 +110,12 @@ The snippet must match the `words.js` shape exactly, with JSON-escaped strings. 
 
 - Keep focus visible (`:focus-visible` 3px ink outline) and use `aria-pressed` on toggle chips and `aria-disabled` or `disabled` on locked buttons.
 - Build anything that shows user-typed text with `textContent`, never `innerHTML`.
-- Wrap every `localStorage` read and write in try/catch. Settings use `imposter-settings` and custom lists use `imposter-custom-v1`.
+- Wrap every `localStorage` read and write in try/catch. Settings use `blacksheep-settings` and custom lists use `blacksheep-custom-v1` (older saves under the previous names are read once and carried over).
 - No frameworks, bundlers or new dependencies without asking the user first.
 
 ## Before you commit a visual change
 
 1. Check it at 320px, 375px and 390px: no sideways scroll, nothing overlapping, the main action visible.
-2. Play one full round (setup, pass, reveal for both a player and the imposter, discuss, vote, result).
+2. Play one full round (setup, pass, reveal for both a player and the black sheep, discuss, vote, result).
 3. Check that no Tamil word wraps on the reveal or result card.
 4. Update this file if you added a token, component or rule.
