@@ -1,7 +1,8 @@
 # Tamil Imposter
 
-A static, mobile-first pass-the-phone party game: `index.html`, `style.css`, `app.js` and `words.js`. There's no build step. Serve the folder (for example `python -m http.server`) and open `index.html`.
+Pass-the-phone imposter party game with Tamil words. Static site (index.html, style.css, app.js, words.js), no build step, hosted on GitHub Pages from `main` (root).
 
-## Always read DESIGN.md first
+**Always read and follow [DESIGN.md](DESIGN.md) before making any change**, whether to the UI, copy, layout or features. Keep DESIGN.md up to date in the same commit when you add a colour, component, screen or rule.
 
-Before making or changing anything players see (pages, styles, copy, components), read [DESIGN.md](DESIGN.md) and follow it. If a change needs a new colour, component or rule, update DESIGN.md in the same commit. Before committing, run through the checklist at the end of DESIGN.md.
+- Word list: `words.js` defines `const CATEGORIES = [{ name, nameEn, words: [{ word, wordEn, hint, hintEn }] }]`.
+- To test, open index.html in a browser at phone width (375px) and play a full round.

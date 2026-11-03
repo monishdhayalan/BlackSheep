@@ -1,110 +1,100 @@
 # Tamil Imposter: design guide
 
-Read this file before changing anything players see, and update it in the same commit when a design decision changes. If the code and this file disagree, ask which one is right; don't silently pick one.
+Read this before every change to the game, including small ones. If a change needs something this file doesn't cover, follow the closest existing pattern and add it here in the same commit.
 
 ## What the game is
 
-A pass-the-phone party game. One phone goes around a room, usually in the evening, often with family. Everyone sees the same secret Tamil word except the imposter. Phones are the main platform. Desktop just shows the same single column, centred.
+Tamil Imposter is a pass-the-phone party game for a group in one room. Everyone gets the same secret Tamil word except the imposter, who gets a hint. One phone travels around the group, and nobody joins from their own device. It's a static site (plain HTML, CSS and JS, no build step) hosted on GitHub Pages.
 
-The look borrows from Tamil street visuals: hand-painted cinema banners, kolam dot grids, turmeric and kumkum colours, banana leaf. It should never look like a generic dark "game app" or a SaaS card kit.
+**Main platform: phones.** Design at 375px first, then check 320px and 390px. Desktop only needs to look reasonable: the content column is capped at 460px and centred.
 
 ## Language rules
 
-- The interface is in **English only**: buttons, titles, instructions and messages.
-- Only the **secret words, hints and category names** are in Tamil.
-- Every Tamil word, hint and category name has a **Thanglish line right below it** (Tamil written in English letters), styled with `.translit`. A missing Thanglish line hides itself (`.translit:empty`).
-- Custom (player-made) words can be in any language. Their Thanglish and hint are optional.
-- The secret word, the hint word and the result word always stay on **one line**. `fitText()` in `app.js` shrinks them to fit (minimum 16px). Never let them wrap.
+- **The whole interface is in English.** That covers buttons, titles, instructions and messages.
+- **Only the game content is in Tamil:** the secret words, the imposter hints and the category names.
+- **Every Tamil word, hint and category name has its Thanglish right below it** (how a Tamilian would type it in English letters, like "Yaanai", not a formal transliteration). If a custom word has no Thanglish, the line is hidden, never left empty.
+- **The secret word stays on one line.** `.secret` and `.hint-word` use `white-space: nowrap`, and `fitText()` / `fitAll()` in app.js shrink long words to fit (minimum 16px). Any new place that shows a word must use the same pattern.
 
-## Colour tokens (`style.css` `:root`)
+## Visual direction: painted banner on turmeric
 
-| Token | Value | Use |
+The look borrows from Tamil street visuals: hand-painted cinema banners, kolam dot grids, turmeric, kumkum and banana leaf. The style is flat colours, thick ink outlines and hard offset shadows. There are no gradients for decoration and no soft drop shadows.
+
+**One loud element:** the word reveal banner (`.banner.reveal`), which is big, outlined, has a hard shadow and pops in. Everything else stays quiet so the reveal lands. Don't add a second loud element.
+
+### Colour tokens (defined in `:root` in style.css)
+
+| Token | Hex | Use |
 |---|---|---|
-| `--turmeric` | `#F2B23A` | Page background, text on maroon buttons and chips |
-| `--turmeric-deep` | `#E09A1F` | Reserved, deeper turmeric |
-| `--ink` | `#3A0B14` | Main text, borders, primary buttons, selected chips, hard shadows |
+| `--turmeric` | `#F2B23A` | Page background, text on ink buttons and selected chips |
+| `--turmeric-deep` | `#E09A1F` | Darker turmeric accents |
+| `--ink` | `#3A0B14` | Text, outlines, primary buttons, selected chips (maroon) |
 | `--ink-soft` | `#6E3A2C` | Secondary text, placeholders, dashed outlines |
-| `--kumkum` | `#C8102E` | Imposter banner, title and button offset shadows, errors, "imposter escaped" |
-| `--leaf` | `#1E6B3A` | "Imposter caught" only |
-| `--paper` | `#FFF9EE` | Panels and banners |
-| `--line` | `rgba(58,11,20,.14)` | Hairlines, input borders, progress track |
+| `--kumkum` | `#C8102E` | The imposter card, the "imposter escaped" result, errors, offset shadows on primary buttons and headings |
+| `--leaf` | `#1E6B3A` | The "imposter caught" result only |
+| `--paper` | `#FFF9EE` | Panels, cards, text on kumkum |
+| `--line` | `rgba(58,11,20,.14)` | Dividers and quiet borders |
 
-- The body has a faint **kolam dot grid**: an ink radial-gradient on a 22px grid.
-- Don't add new colours. If one is really needed, add it as a token here first.
-- Never use pure black or grey: ink is maroon.
+Always use the tokens and never hard-code new hex values. A new colour needs a reason tied to the subject and a new row in this table.
 
-## Type
+### Background
 
-- **Baloo Thambi 2** (500/700/800), `--display`: headings, secret words, player names, timer, buttons, chips.
-- **Hind Madurai** (400/600), `--body`: everything else.
-- Both are loaded from Google Fonts in `index.html` and both cover Tamil.
-- Use the scale tokens, not raw sizes: `--t-sm .875`, `--t-md 1`, `--t-lg 1.25`, `--t-xl 1.563`, `--t-2xl 2.441`, `--t-3xl 3.815` rem (ratio 1.25).
-  - The exceptions are the secret word, `clamp(2.6rem, 14vw, 4.2rem)`, and the timer, `5rem`.
-- Use sentence case everywhere. No ALL-CAPS labels, no eyebrow labels above headings, and no accenting one word of a headline in a different colour or style.
+Turmeric with a kolam dot grid: `radial-gradient` dots at 22px spacing, fixed. Don't add other textures.
 
-## Shape, depth and motion
+### Typography
 
-- **Borders:** 2px solid `--ink` on panels, buttons and chips. The banner uses 3px. Dashed outlines mean "add something" or "not ready yet": "+ Add player", "+ New category", a category with fewer than 2 words, and the hint input.
-- **Radii follow hierarchy:** banner 28px, panel 22px, button 18px, input 14px, chips and pills 999px, round icon buttons 50%.
-- **Hard offset shadows are the signature. Use them sparingly:**
-  - Banner (the word reveal): `6px 6px 0 var(--ink)`
-  - Result answer banner: `4px 4px 0 var(--ink)`
-  - Primary button: `4px 4px 0 var(--kumkum)`, pressing it moves the button into its shadow.
-  - Title and player name: `text-shadow: 3px 3px 0 var(--kumkum)`
-  - Setup panels get **no** shadow. Don't add soft or blurred shadows anywhere.
-- **Motion:** one orchestrated moment, the banner "unfold" when a word is revealed. Other motion only responds to a tap: button press, toggle switch. No entrance animations on screens or sections. `prefers-reduced-motion` turns all motion off.
+- **Display:** `"Baloo Thambi 2"` (`--display`), weights 700 and 800. Use it for headings, the secret word, player names, the timer, buttons and chips. It handles Tamil and Latin.
+- **Body:** `"Hind Madurai"` (`--body`), weights 400 and 600. Use it for sentences, labels and Thanglish sub-lines on chips.
+- Both are loaded from Google Fonts in index.html. Don't add a third family.
+- Type scale is 1.25 (`--t-sm` .875rem, `--t-md` 1rem, `--t-lg` 1.25rem, `--t-xl` 1.563rem, `--t-2xl` 2.441rem, `--t-3xl` 3.815rem). Pick from the scale and don't invent sizes. The secret word may use `clamp()` and `fitText()`.
+- Headings use sentence case. No all-caps labels, no small eyebrow labels above headings, and no single highlighted word inside a heading.
+- The banner text treatment (`text-shadow: 3px 3px 0 var(--kumkum)`) is only for the "Tamil Imposter" title and the player name on the pass screen.
 
-## Layout
+### Shapes and depth
 
-- One column, `max-width: 460px`, with a 16px side gutter and safe-area padding for the notch and home bar.
-- Every screen is a `.screen` section, and only `.screen.active` shows. `show(name)` in `app.js` switches screens.
-- **The main action sits at the bottom of the screen in `.actions`** (sticky, within thumb reach), with an opaque turmeric fade behind it. Each screen has one primary button there; a secondary ghost button can sit under it.
-- Game screens (pass, reveal, discuss, result) centre their content in `.stage`. Setup and editor screens stack `.panel`s.
-- Nothing may scroll sideways. Test at **320px and 375px**.
+- Panels (`.panel`) have a paper background, a 2px ink border and an 18–22px radius.
+- The reveal banner (`.banner`) has a 3px ink border, a 28px radius and `6px 6px 0 var(--ink)` hard shadow.
+- Primary buttons get a `4px 4px 0 var(--kumkum)` hard shadow. On press they translate into the shadow.
+- Chips are pills (999px radius) with a 2px ink border. Selected chips are filled ink with turmeric text.
+- Dashed borders mean "add something" or "not ready yet" (Add player, + New category, a custom list with under 2 words).
 
-## Components (reuse these, don't invent new ones)
+## Layout and mobile rules
 
-- `.panel`: paper box with a 2px ink border, 22px radius, no shadow.
-- `.panel-head`: an h2 with small actions on the right. They must stay on one row at 320px.
-- `.banner`: the loud element. Use it only for the secret word, and for the answer on the result screen.
-- `.reveal.imposter`: the banner in full kumkum with paper text.
-- Buttons:
-  - `.btn.primary` (maroon, turmeric text, kumkum offset shadow). Add `.big` for the bottom action.
-  - `.btn.ghost` (outline only).
-  - `.link` (underlined text button).
-  - `.mini` (small underlined header actions).
-  - `.back` ("‹ Back").
-  - A disabled primary button is greyed out with no shadow.
-- `.chip`: a pill with the Tamil name, and the Thanglish below it in `.chip-sub`. `.on` means selected (maroon fill). `.own` marks a player's category, with an attached `.chip-edit`.
-- `.count`: a maroon pill showing a number next to a heading.
-- `.stepper`: 44px round − and + buttons around a display-font number.
-- `.toggle`: a switch built from a checkbox.
-- Inputs: 48px tall, 14px radius, `--line` border that turns ink on focus. `.field` wraps a label and an input.
-- Messages:
-  - `.form-note` (muted status)
-  - `.form-error` (kumkum)
-  - `.start-note` (kumkum, centred above the start button)
-  - Each one hides itself when empty.
-- `[hidden]` always wins (`display: none !important`), so you can toggle elements with the `hidden` attribute.
+- Single column, max-width 460px, 16px side padding. The page must never scroll sideways at 320px.
+- **The main action sits in the sticky `.actions` bar at the bottom of every screen**, within thumb reach. There's one primary button per screen, and an optional ghost button next to or under it.
+- Tap targets are at least 44px, and main buttons are 56–60px tall.
+- Respect the notch and home bar with `env(safe-area-inset-*)`.
+- Setup screen order: title, Players, Categories (Select all / Deselect all at the top right), Imposters and hint switch, "How to play" link, then the sticky Start game.
+- Players are numbered in the order the phone is passed.
+- Start game is disabled, with a short kumkum note above it, until at least one category is selected.
+- Panels and screens are left aligned. Only the pass, reveal, discuss and result "stage" moments are centred.
 
-## Touch and accessibility
+## Components to reuse
 
-- Every tap target is at least 44px, and most are 48–60px.
-- Keep a visible focus outline: `:focus-visible` uses 3px ink.
-- Contrast: ink on turmeric or paper, turmeric on ink, paper on kumkum. Don't put `--ink-soft` text on kumkum.
-- Build the DOM with `textContent`, never `innerHTML` with player-typed text.
+Use these before creating anything new: `.panel`, `.panel-head` with `.mini` text buttons, `.btn` / `.btn.primary` / `.btn.ghost` / `.btn.big`, `.chip` / `.chip.on` / `.chip-sub`, `.own-chip` + `.chip-edit` (custom categories), `.row` + `.toggle` switch, `.stepper`, `.name-row`, `.field`, `.quick-add`, `.word-row`, `.link` / `.link.danger`, `.back`, `.banner` / `.banner.reveal` / `.reveal.imposter`, `.translit`, `.hint` / `.hint-word`, `.actions`, `.stage`, `.progress`.
+
+## Motion
+
+- The only entrance animation is the reveal banner's `unfold` pop. Don't add fade-ins to every screen or section.
+- Motion that answers a tap (button press, switch slide) is fine and short (≤150ms).
+- `prefers-reduced-motion` turns all animation off. Keep that rule last in its section.
 
 ## Copy
 
-- Plain verbs, sentence case, written from the player's side: "Start game", "Show my word", "Hide and pass on", "Go to vote", "Play again", "Save".
+- Use plain, active, sentence-case English. Buttons say exactly what happens: "Start game", "Show my word", "Hide and pass on", "Go to vote", "Play again".
 - An action keeps the same name throughout the flow.
-- Errors say what to do: "Pick at least one category to start." "Add at least 2 words to play this category."
-- No filler or marketing tone. Exclamation marks are fine in game moments ("Imposter caught!") but not in instructions.
+- Errors and empty states tell the player what to do, for example "Pick at least one category to start." or "Add 2+ words".
+- No arrows appended to buttons, no "A · B · C" meta strings, no "Word — fragment" labels.
 
-## Checklist before committing a visible change
+## Accessibility and code rules
 
-1. Uses only the tokens and components above, or this file is updated in the same commit.
-2. English UI, Tamil plus Thanglish for words and hints, secret words on one line.
-3. Main action is still at the bottom, and tap targets are 44px or more.
-4. Checked in the browser at 320px and 375px: no sideways scroll, no overlap, no console errors.
-5. Played one full round: setup, pass, reveal (normal player and imposter), discuss, vote, result.
+- Keep focus visible (`:focus-visible` 3px ink outline) and use `aria-pressed` on toggle chips and `aria-disabled` or `disabled` on locked buttons.
+- Build anything that shows user-typed text with `textContent`, never `innerHTML`.
+- Wrap every `localStorage` read and write in try/catch. Settings use `imposter-settings` and custom lists use `imposter-custom-v1`.
+- No frameworks, bundlers or new dependencies without asking the user first.
+
+## Before you commit a visual change
+
+1. Check it at 320px, 375px and 390px: no sideways scroll, nothing overlapping, the main action visible.
+2. Play one full round (setup, pass, reveal for both a player and the imposter, discuss, vote, result).
+3. Check that no Tamil word wraps on the reveal or result card.
+4. Update this file if you added a token, component or rule.
