@@ -2,7 +2,7 @@
 
 A pass-the-phone party game with Tamil words. Everyone in the group gets the same secret Tamil word except the black sheep, who only gets a hint. You take turns giving clues, then vote on who the black sheep is. The interface is in English, and every Tamil word and hint has its Thanglish written right below it, so anyone can read it.
 
-**Play:** https://monishdhayalan.github.io/ImposterGame/ (live once GitHub Pages is turned on for this repo)
+**Play:** https://monishdhayalan.github.io/BlackSheep/
 
 ## How to play
 
@@ -17,7 +17,7 @@ A pass-the-phone party game with Tamil words. Everyone in the group gets the sam
 There's no build step and nothing to install.
 
 ```bash
-git clone https://github.com/monishdhayalan/ImposterGame.git
+git clone https://github.com/monishdhayalan/BlackSheep.git
 ```
 
 Then open `index.html` in a browser. To test on your phone over Wi-Fi, serve the folder (for example `python -m http.server`) and open your computer's address from the phone.
