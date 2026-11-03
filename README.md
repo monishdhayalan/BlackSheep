@@ -80,7 +80,8 @@ Before you open the pull request, open `index.html` in a browser (see "Run it lo
 - `tools/check-words.js`: checks `words.js` for missing fields and duplicates
 - `DESIGN.md`: the design guide, which every change follows
 - `CLAUDE.md`: notes for AI coding assistants working on the project
+- `LICENSE`: the MIT license
 
 ## License
 
-No license has been chosen yet.
+MIT. See [LICENSE](LICENSE). By opening a pull request you agree your contribution is shared under the same license.
