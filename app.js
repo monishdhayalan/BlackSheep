@@ -2,7 +2,6 @@
   "use strict";
 
   const MIN_PLAYERS = 3;
-  const MAX_PLAYERS = 12;
   const STORAGE_KEY = "imposter-settings";
   const DISCUSS_SECONDS = 180;
 
@@ -17,10 +16,17 @@
     const fallback = { players: 4, imposters: 1, hint: true, names: [] };
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      return saved ? Object.assign(fallback, saved) : fallback;
+      return normalize(saved ? Object.assign(fallback, saved) : fallback);
     } catch (e) {
-      return fallback;
+      return normalize(fallback);
     }
+  }
+  // The names list is the player list: one entry (possibly blank) per player.
+  function normalize(s) {
+    if (!Array.isArray(s.names)) s.names = [];
+    while (s.names.length < Math.max(MIN_PLAYERS, s.players || 0)) s.names.push("");
+    s.players = s.names.length;
+    return s;
   }
   function saveSettings() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)); } catch (e) { /* ignore */ }
@@ -51,7 +57,8 @@
   function playerName(i) { return (settings.names[i] || "").trim() || "Player " + (i + 1); }
 
   // ---------- setup screen ----------
-  function renderSetup() {
+  function renderSetup(focusIndex) {
+    settings.players = settings.names.length;
     settings.imposters = Math.min(settings.imposters, maxImposters(settings.players));
     $("players-count").textContent = settings.players;
     $("imposters-count").textContent = settings.imposters;
@@ -59,26 +66,50 @@
 
     const box = $("names");
     box.innerHTML = "";
-    for (let i = 0; i < settings.players; i++) {
+    settings.names.forEach((name, i) => {
+      const row = document.createElement("div");
+      row.className = "name-row";
+
       const input = document.createElement("input");
       input.type = "text";
       input.maxLength = 20;
       input.placeholder = "Player " + (i + 1);
-      input.value = settings.names[i] || "";
+      input.value = name || "";
       input.addEventListener("input", () => { settings.names[i] = input.value; saveSettings(); });
-      box.appendChild(input);
-    }
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && i === settings.names.length - 1) addPlayer();
+      });
+
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "remove";
+      remove.textContent = "×";
+      remove.setAttribute("aria-label", "Remove " + playerName(i));
+      remove.disabled = settings.names.length <= MIN_PLAYERS;
+      remove.addEventListener("click", () => {
+        settings.names.splice(i, 1);
+        saveSettings();
+        renderSetup();
+      });
+
+      row.appendChild(input);
+      row.appendChild(remove);
+      box.appendChild(row);
+      if (i === focusIndex) input.focus();
+    });
   }
+
+  function addPlayer() {
+    settings.names.push("");
+    saveSettings();
+    renderSetup(settings.names.length - 1);
+  }
+  $("btn-add-player").addEventListener("click", addPlayer);
 
   document.querySelectorAll("[data-step]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const key = btn.dataset.step;
       const dir = Number(btn.dataset.dir);
-      if (key === "players") {
-        settings.players = Math.min(MAX_PLAYERS, Math.max(MIN_PLAYERS, settings.players + dir));
-      } else {
-        settings.imposters = Math.min(maxImposters(settings.players), Math.max(1, settings.imposters + dir));
-      }
+      settings.imposters = Math.min(maxImposters(settings.players), Math.max(1, settings.imposters + dir));
       saveSettings();
       renderSetup();
     });

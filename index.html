@@ -23,14 +23,6 @@
 
       <div class="card">
         <label class="row">
-          <span>Players</span>
-          <div class="stepper">
-            <button type="button" data-step="players" data-dir="-1" aria-label="Decrease">−</button>
-            <output id="players-count">4</output>
-            <button type="button" data-step="players" data-dir="1" aria-label="Increase">+</button>
-          </div>
-        </label>
-        <label class="row">
           <span>Imposters</span>
           <div class="stepper">
             <button type="button" data-step="imposters" data-dir="-1" aria-label="Decrease">−</button>
@@ -45,8 +37,9 @@
       </div>
 
       <div class="card">
-        <h2>Player names</h2>
+        <h2>Players <span class="muted" id="players-count">4</span></h2>
         <div id="names"></div>
+        <button type="button" id="btn-add-player" class="btn ghost add-player">+ Add player</button>
       </div>
 
       <button id="btn-start" class="btn primary big">Start game</button>
