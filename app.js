@@ -10,10 +10,11 @@
   const settings = loadSettings();
   let round = null;
   let timerId = null;
+  const usedWords = new Set(); // "categoryIndex:wordIndex" drawn this session
 
   // ---------- storage ----------
   function loadSettings() {
-    const fallback = { players: 4, imposters: 1, hint: true, names: [] };
+    const fallback = { players: 4, imposters: 1, hint: true, names: [], categories: null };
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
       return normalize(saved ? Object.assign(fallback, saved) : fallback);
@@ -26,6 +27,10 @@
     if (!Array.isArray(s.names)) s.names = [];
     while (s.names.length < Math.max(MIN_PLAYERS, s.players || 0)) s.names.push("");
     s.players = s.names.length;
+    // Selected categories are stored by nameEn; drop unknown names, default to all.
+    const known = CATEGORIES.map((c) => c.nameEn);
+    s.categories = Array.isArray(s.categories) ? s.categories.filter((n) => known.includes(n)) : [];
+    if (!s.categories.length) s.categories = known.slice();
     return s;
   }
   function saveSettings() {
@@ -53,6 +58,7 @@
     p.textContent = text;
     parent.appendChild(p);
   }
+  function categoryLabel(cat) { return "Category: " + cat.name + " (" + cat.nameEn + ")"; }
   function maxImposters(players) { return Math.max(1, Math.floor((players - 1) / 2)); }
   function playerName(i) { return (settings.names[i] || "").trim() || "Player " + (i + 1); }
 
@@ -122,12 +128,75 @@
   $("btn-howto").addEventListener("click", () => show("howto"));
 
   // ---------- round ----------
+  // ---------- categories ----------
+  function renderCategories() {
+    const box = $("categories");
+    box.innerHTML = "";
+    const allOn = settings.categories.length === CATEGORIES.length;
+    box.appendChild(makeChip("All", "", allOn, () => {
+      if (allOn) return; // at least one category must stay selected
+      settings.categories = CATEGORIES.map((c) => c.nameEn);
+      saveSettings();
+      renderCategories();
+    }));
+    CATEGORIES.forEach((cat) => {
+      const on = settings.categories.includes(cat.nameEn);
+      box.appendChild(makeChip(cat.name, cat.nameEn, on, () => {
+        if (on && settings.categories.length === 1) return; // keep the last one
+        settings.categories = on
+          ? settings.categories.filter((n) => n !== cat.nameEn)
+          : settings.categories.concat(cat.nameEn);
+        saveSettings();
+        renderCategories();
+      }));
+    });
+  }
+  function makeChip(label, sub, on, onClick) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip" + (on ? " on" : "");
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+    const main = document.createElement("span");
+    main.textContent = label;
+    b.appendChild(main);
+    if (sub) {
+      const small = document.createElement("span");
+      small.className = "chip-sub";
+      small.textContent = sub;
+      b.appendChild(small);
+    }
+    b.addEventListener("click", onClick);
+    return b;
+  }
+
+  // Random category from the selected ones, then a random word from it,
+  // without repeats until every word in the selected categories has been used.
+  function pickWord() {
+    const pool = [];
+    CATEGORIES.forEach((cat, ci) => {
+      if (settings.categories.includes(cat.nameEn)) pool.push(ci);
+    });
+    const unused = (ci) => CATEGORIES[ci].words.map((w, wi) => wi).filter((wi) => !usedWords.has(ci + ":" + wi));
+    let open = pool.filter((ci) => unused(ci).length);
+    if (!open.length) {
+      pool.forEach((ci) => CATEGORIES[ci].words.forEach((w, wi) => usedWords.delete(ci + ":" + wi)));
+      open = pool;
+    }
+    const ci = open[randInt(open.length)];
+    const choices = unused(ci);
+    const wi = choices[randInt(choices.length)];
+    usedWords.add(ci + ":" + wi);
+    return { category: CATEGORIES[ci], word: CATEGORIES[ci].words[wi] };
+  }
+
   function startRound() {
-    const entry = window.WORDS[randInt(window.WORDS.length)];
+    const pick = pickWord();
+    const entry = pick.word;
     const order = shuffle([...Array(settings.players).keys()]);
     const imposters = new Set(order.slice(0, settings.imposters));
     round = {
       entry: entry,
+      category: pick.category,
       imposters: imposters,
       current: 0,
       firstSpeaker: randInt(settings.players)
@@ -159,9 +228,11 @@
       $("reveal-translit").textContent = "";
       if (settings.hint) {
         addLine(hintBox, "muted", "Your hint");
+        addLine(hintBox, "muted small", categoryLabel(round.category));
         addLine(hintBox, "hint-word", round.entry.hint);
         addLine(hintBox, "translit", round.entry.hintEn);
       } else {
+        addLine(hintBox, "muted small", categoryLabel(round.category));
         addLine(hintBox, "", "Blend in without getting caught!");
       }
     } else {
@@ -241,6 +312,7 @@
       : playerName(votedOut) + " was not the imposter. The imposter wins!";
     $("result-word").textContent = round.entry.word;
     $("result-translit").textContent = round.entry.wordEn;
+    $("result-category").textContent = categoryLabel(round.category);
     const names = [...round.imposters].sort((a, b) => a - b).map(playerName).join(", ");
     $("result-imposters").textContent = (round.imposters.size > 1 ? "Imposters: " : "Imposter: ") + names;
     show("result");
@@ -254,4 +326,5 @@
   $("btn-again").addEventListener("click", startRound);
 
   renderSetup();
+  renderCategories();
 })();
