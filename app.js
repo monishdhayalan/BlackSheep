@@ -33,10 +33,10 @@
     if (!Array.isArray(s.names)) s.names = [];
     while (s.names.length < Math.max(MIN_PLAYERS, s.players || 0)) s.names.push("");
     s.players = s.names.length;
-    // Selected categories are stored by key (nameEn, or "custom:<id>"); drop unknown ones, default to all.
+    // Selected categories are stored by key (nameEn, or "custom:<id>"); drop unknown ones.
+    // Only a brand-new visitor (nothing saved) starts with everything selected; an empty selection is kept.
     const known = selectableKeys();
-    s.categories = Array.isArray(s.categories) ? s.categories.filter((n) => known.includes(n)) : [];
-    if (!s.categories.length) s.categories = known.slice();
+    s.categories = Array.isArray(s.categories) ? s.categories.filter((n) => known.includes(n)) : known.slice();
     return s;
   }
   function loadCustom() {
@@ -77,7 +77,6 @@
   function cleanSelection() {
     const known = selectableKeys();
     settings.categories = settings.categories.filter((k) => known.includes(k));
-    if (!settings.categories.length) settings.categories = known.slice();
     saveSettings();
   }
   function saveSettings() {
@@ -193,14 +192,13 @@
   function renderCategories() {
     const box = $("categories");
     box.innerHTML = "";
-    const cats = allCategories();
-    const allOn = settings.categories.length === cats.length;
-    box.appendChild(makeChip("All", "", allOn, () => {
-      if (allOn) return; // at least one category must stay selected
-      settings.categories = cats.map((c) => c.key);
-      saveSettings();
-      renderCategories();
-    }));
+    const keys = selectableKeys();
+    const picked = settings.categories.length;
+    $("btn-cat-all").disabled = picked === keys.length;
+    $("btn-cat-none").disabled = picked === 0;
+    $("btn-start").disabled = picked === 0;
+    $("btn-start").setAttribute("aria-disabled", picked === 0 ? "true" : "false");
+    $("start-note").hidden = picked > 0;
     CATEGORIES.forEach((cat) => box.appendChild(toggleChip(cat.name, cat.nameEn, cat.nameEn)));
 
     custom.forEach((c) => {
@@ -231,7 +229,6 @@
   function toggleChip(label, sub, key) {
     const on = settings.categories.includes(key);
     return makeChip(label, sub, on, () => {
-      if (on && settings.categories.length === 1) return; // keep the last one
       settings.categories = on
         ? settings.categories.filter((n) => n !== key)
         : settings.categories.concat(key);
@@ -447,7 +444,25 @@
   $("btn-custom-save").addEventListener("click", closeEditor);
 
   // ---------- round ----------
+  $("btn-cat-all").addEventListener("click", () => {
+    settings.categories = selectableKeys();
+    saveSettings();
+    renderCategories();
+  });
+  $("btn-cat-none").addEventListener("click", () => {
+    settings.categories = [];
+    saveSettings();
+    renderCategories();
+  });
+
   function startRound() {
+    if (!allCategories().some((c) => settings.categories.includes(c.key))) {
+      stopTimer(); // nothing to draw from: back to setup to pick a category
+      renderSetup();
+      renderCategories();
+      show("setup");
+      return;
+    }
     const pick = pickWord();
     const entry = pick.word;
     const order = shuffle([...Array(settings.players).keys()]);

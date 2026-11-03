@@ -168,7 +168,7 @@ h1 {
   display: grid; gap: 10px;
   margin: auto -16px 0;
   padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
-  background: linear-gradient(to bottom, rgba(242, 178, 58, 0), var(--turmeric) 30%);
+  background: linear-gradient(to bottom, rgba(242, 178, 58, 0), var(--turmeric) 12px);
 }
 
 /* ---------- pass / reveal / discuss ---------- */
@@ -307,3 +307,21 @@ h1 {
 .paste-box { display: grid; gap: 10px; margin-top: 4px; }
 #btn-paste-toggle { align-self: flex-start; margin-top: 6px; padding-left: 0; }
 .link.danger { color: var(--kumkum); }
+
+/* ---------- category header actions ---------- */
+.panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.panel-head h2 { margin: 0; flex: none; }
+.head-actions { display: flex; flex: none; gap: 2px; }
+.mini {
+  min-height: 36px; padding: 0 6px; border: 0; background: none; cursor: pointer; white-space: nowrap;
+  font: inherit; font-size: var(--t-sm); font-weight: 600; color: var(--ink);
+  text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px;
+}
+.mini:disabled { color: var(--ink-soft); opacity: .45; text-decoration: none; cursor: default; }
+
+.start-note { text-align: center; font-weight: 600; font-size: var(--t-sm); color: var(--kumkum); }
+.btn.primary:disabled { background: var(--ink-soft); color: var(--paper); opacity: .45; box-shadow: none; transform: none; }
+@media (max-width: 380px) {
+  .panel-head h2 { font-size: var(--t-lg); }
+  .mini { font-size: .78rem; padding: 0 4px; }
+}
