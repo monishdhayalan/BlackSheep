@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ta">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1b1530">
+  <title>கள்ளன் யார்?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mukta+Malar:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="app">
+
+    <!-- Home / setup -->
+    <section id="screen-setup" class="screen active">
+      <header class="hero">
+        <div class="logo">🕵️</div>
+        <h1>கள்ளன் யார்?</h1>
+        <p class="sub">ஃபோனை ஒவ்வொருவருக்கும் கொடுங்கள். எல்லோருக்கும் ஒரே ரகசிய வார்த்தை, கள்ளனுக்கு மட்டும் இல்லை!</p>
+      </header>
+
+      <div class="card">
+        <label class="row">
+          <span>வீரர்கள்</span>
+          <div class="stepper">
+            <button type="button" data-step="players" data-dir="-1" aria-label="குறை">−</button>
+            <output id="players-count">4</output>
+            <button type="button" data-step="players" data-dir="1" aria-label="கூட்டு">+</button>
+          </div>
+        </label>
+        <label class="row">
+          <span>கள்ளர்கள்</span>
+          <div class="stepper">
+            <button type="button" data-step="imposters" data-dir="-1" aria-label="குறை">−</button>
+            <output id="imposters-count">1</output>
+            <button type="button" data-step="imposters" data-dir="1" aria-label="கூட்டு">+</button>
+          </div>
+        </label>
+        <label class="row toggle">
+          <span>கள்ளனுக்கு குறிப்பு (வகை) காட்டு</span>
+          <input type="checkbox" id="opt-hint" checked>
+        </label>
+      </div>
+
+      <div class="card">
+        <h2>வீரர் பெயர்கள்</h2>
+        <div id="names"></div>
+      </div>
+
+      <button id="btn-start" class="btn primary big">விளையாட்டைத் தொடங்கு</button>
+      <button id="btn-howto" class="btn ghost">எப்படி விளையாடுவது?</button>
+    </section>
+
+    <!-- How to play -->
+    <section id="screen-howto" class="screen">
+      <div class="card prose">
+        <h2>எப்படி விளையாடுவது?</h2>
+        <ol>
+          <li>ஃபோனை ஒவ்வொருவராகக் கொடுத்து, அவரவர் வார்த்தையை ரகசியமாகப் பாருங்கள்.</li>
+          <li>எல்லோருக்கும் ஒரே வார்த்தை. கள்ளனுக்கு மட்டும் வார்த்தை தெரியாது.</li>
+          <li>ஒவ்வொருவரும் அந்த வார்த்தையைப் பற்றி ஒரு சிறு குறிப்பு சொல்லுங்கள். வார்த்தையை நேரடியாகச் சொல்லக்கூடாது!</li>
+          <li>பேசி முடித்ததும், கள்ளன் யார் என்று வாக்களியுங்கள்.</li>
+          <li>கள்ளன் பிடிபட்டால் மற்றவர்கள் வெற்றி. தப்பித்தால் கள்ளன் வெற்றி!</li>
+        </ol>
+      </div>
+      <button class="btn primary" data-go="setup">சரி, புரிந்தது</button>
+    </section>
+
+    <!-- Pass the phone -->
+    <section id="screen-pass" class="screen">
+      <div class="progress" id="pass-progress"></div>
+      <div class="card center">
+        <p class="muted">ஃபோனை இவரிடம் கொடுங்கள்</p>
+        <h2 class="player-name" id="pass-name"></h2>
+        <p class="muted small">மற்றவர்கள் பார்க்காமல் இருக்கட்டும்!</p>
+      </div>
+      <button id="btn-reveal" class="btn primary big">என் வார்த்தையைப் பார்</button>
+    </section>
+
+    <!-- Reveal -->
+    <section id="screen-reveal" class="screen">
+      <div class="card center reveal" id="reveal-card">
+        <p class="muted" id="reveal-label"></p>
+        <h2 class="secret" id="reveal-word"></h2>
+        <p class="hint" id="reveal-hint"></p>
+      </div>
+      <button id="btn-hide" class="btn primary big">மறைத்து, அடுத்தவருக்குக் கொடு</button>
+    </section>
+
+    <!-- Discuss -->
+    <section id="screen-discuss" class="screen">
+      <div class="card center">
+        <p class="muted">எல்லோரும் பார்த்துவிட்டீர்கள்!</p>
+        <h2>விவாதம் தொடங்கட்டும்</h2>
+        <p>முதலில் பேசுபவர்: <strong id="first-speaker"></strong></p>
+        <div class="timer" id="timer">3:00</div>
+        <div class="timer-actions">
+          <button id="btn-timer" class="btn ghost small-btn">டைமர் தொடங்கு</button>
+        </div>
+      </div>
+      <button id="btn-to-vote" class="btn primary big">வாக்களிக்கச் செல்</button>
+    </section>
+
+    <!-- Vote -->
+    <section id="screen-vote" class="screen">
+      <div class="card">
+        <h2>கள்ளன் யார்?</h2>
+        <p class="muted small">அதிக வாக்குகள் பெற்றவரைத் தேர்ந்தெடுங்கள்</p>
+        <div id="vote-list" class="vote-list"></div>
+      </div>
+    </section>
+
+    <!-- Result -->
+    <section id="screen-result" class="screen">
+      <div class="card center">
+        <div class="big-emoji" id="result-emoji"></div>
+        <h2 id="result-title"></h2>
+        <p id="result-detail"></p>
+        <div class="answer">
+          <p class="muted small">ரகசிய வார்த்தை</p>
+          <p class="secret small-secret" id="result-word"></p>
+          <p class="muted small" id="result-imposters"></p>
+        </div>
+      </div>
+      <button id="btn-again" class="btn primary big">மீண்டும் விளையாடு</button>
+      <button class="btn ghost" data-go="setup">அமைப்புகளுக்குத் திரும்பு</button>
+    </section>
+
+  </main>
+  <script src="words.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
