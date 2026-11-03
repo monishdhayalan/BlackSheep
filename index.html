@@ -53,6 +53,43 @@
       </div>
     </section>
 
+    <!-- Custom category editor -->
+    <section id="screen-custom" class="screen">
+      <button type="button" id="btn-custom-back" class="back">‹ Back</button>
+      <div class="panel">
+        <label class="field">
+          <span>Category name</span>
+          <input type="text" id="custom-name" maxlength="24" placeholder="My words">
+        </label>
+      </div>
+
+      <div class="panel">
+        <h2>Words <span class="count" id="custom-count">0</span></h2>
+        <p class="muted small">Any language works. Tap a word to add its Thanglish or a hint for the imposter.</p>
+        <div class="quick-add">
+          <input type="text" id="custom-add" maxlength="40" placeholder="Type a word" aria-label="New word" enterkeyhint="done">
+          <button type="button" id="btn-custom-add" class="btn primary">Add</button>
+        </div>
+        <p class="form-note" id="custom-note" role="status"></p>
+        <p class="form-error" id="custom-min"></p>
+        <div id="custom-words" class="word-list"></div>
+        <button type="button" id="btn-paste-toggle" class="link" aria-expanded="false" aria-controls="paste-box">Paste many words</button>
+        <div id="paste-box" class="paste-box" hidden>
+          <label class="field">
+            <span>One word per line. Optionally add Thanglish, hint and hint Thanglish after commas.</span>
+            <textarea id="custom-paste" rows="6" placeholder="மாம்பழம், Maambazham, பழம், Pazham&#10;Filter coffee"></textarea>
+          </label>
+          <button type="button" id="btn-paste-add" class="btn ghost">Add these words</button>
+        </div>
+      </div>
+
+      <button type="button" id="btn-delete-category" class="link danger">Delete category</button>
+
+      <div class="actions">
+        <button type="button" id="btn-custom-save" class="btn primary big">Save</button>
+      </div>
+    </section>
+
     <!-- How to play -->
     <section id="screen-howto" class="screen">
       <div class="panel prose">

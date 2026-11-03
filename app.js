@@ -3,14 +3,20 @@
 
   const MIN_PLAYERS = 3;
   const STORAGE_KEY = "imposter-settings";
+  const CUSTOM_KEY = "imposter-custom-v1";
+  const MIN_CUSTOM_WORDS = 2;
+  const DEFAULT_CUSTOM_NAME = "My words";
   const DISCUSS_SECONDS = 180;
 
   const $ = (id) => document.getElementById(id);
 
+  let custom = loadCustom(); // players' own categories: [{ id, name, words: [{ word, wordEn, hint, hintEn }] }]
   const settings = loadSettings();
+  let editing = null; // the custom category open in the editor
+  let lastCount = 0; // its word count before the latest change
   let round = null;
   let timerId = null;
-  const usedWords = new Set(); // "categoryIndex:wordIndex" drawn this session
+  const usedWords = new Set(); // "categoryKey:wordIndex" drawn this session
 
   // ---------- storage ----------
   function loadSettings() {
@@ -27,11 +33,52 @@
     if (!Array.isArray(s.names)) s.names = [];
     while (s.names.length < Math.max(MIN_PLAYERS, s.players || 0)) s.names.push("");
     s.players = s.names.length;
-    // Selected categories are stored by nameEn; drop unknown names, default to all.
-    const known = CATEGORIES.map((c) => c.nameEn);
+    // Selected categories are stored by key (nameEn, or "custom:<id>"); drop unknown ones, default to all.
+    const known = selectableKeys();
     s.categories = Array.isArray(s.categories) ? s.categories.filter((n) => known.includes(n)) : [];
     if (!s.categories.length) s.categories = known.slice();
     return s;
+  }
+  function loadCustom() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(CUSTOM_KEY));
+      if (!Array.isArray(saved)) return [];
+      return saved.filter((c) => c && typeof c.id === "string" && Array.isArray(c.words)).map((c) => ({
+        id: c.id,
+        name: String(c.name || ""),
+        words: c.words.filter((w) => w && String(w.word || "").trim()).map((w) => ({
+          word: String(w.word).trim(),
+          wordEn: String(w.wordEn || ""),
+          hint: String(w.hint || ""),
+          hintEn: String(w.hintEn || "")
+        }))
+      }));
+    } catch (e) {
+      return [];
+    }
+  }
+  function saveCustom() {
+    try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom)); } catch (e) { /* ignore */ }
+  }
+  function customName(c) { return c.name.trim() || DEFAULT_CUSTOM_NAME; }
+  function isPlayable(c) { return c.words.length >= MIN_CUSTOM_WORDS; }
+  // Built-in categories plus playable custom ones, in one shape.
+  function allCategories() {
+    const own = custom.filter(isPlayable).map((c) => ({
+      key: "custom:" + c.id,
+      name: customName(c),
+      nameEn: "",
+      words: c.words
+    }));
+    return CATEGORIES.map((c) => Object.assign({ key: c.nameEn }, c)).concat(own);
+  }
+  function selectableKeys() { return allCategories().map((c) => c.key); }
+  // Keep the selection valid after custom categories change.
+  function cleanSelection() {
+    const known = selectableKeys();
+    settings.categories = settings.categories.filter((k) => known.includes(k));
+    if (!settings.categories.length) settings.categories = known.slice();
+    saveSettings();
   }
   function saveSettings() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)); } catch (e) { /* ignore */ }
@@ -73,7 +120,7 @@
     p.textContent = text;
     parent.appendChild(p);
   }
-  function categoryLabel(cat) { return "Category: " + cat.name + " (" + cat.nameEn + ")"; }
+  function categoryLabel(cat) { return "Category: " + cat.name + (cat.nameEn ? " (" + cat.nameEn + ")" : ""); }
   function maxImposters(players) { return Math.max(1, Math.floor((players - 1) / 2)); }
   function playerName(i) { return (settings.names[i] || "").trim() || "Player " + (i + 1); }
 
@@ -142,28 +189,54 @@
   });
   $("btn-howto").addEventListener("click", () => show("howto"));
 
-  // ---------- round ----------
   // ---------- categories ----------
   function renderCategories() {
     const box = $("categories");
     box.innerHTML = "";
-    const allOn = settings.categories.length === CATEGORIES.length;
+    const cats = allCategories();
+    const allOn = settings.categories.length === cats.length;
     box.appendChild(makeChip("All", "", allOn, () => {
       if (allOn) return; // at least one category must stay selected
-      settings.categories = CATEGORIES.map((c) => c.nameEn);
+      settings.categories = cats.map((c) => c.key);
       saveSettings();
       renderCategories();
     }));
-    CATEGORIES.forEach((cat) => {
-      const on = settings.categories.includes(cat.nameEn);
-      box.appendChild(makeChip(cat.name, cat.nameEn, on, () => {
-        if (on && settings.categories.length === 1) return; // keep the last one
-        settings.categories = on
-          ? settings.categories.filter((n) => n !== cat.nameEn)
-          : settings.categories.concat(cat.nameEn);
-        saveSettings();
-        renderCategories();
-      }));
+    CATEGORIES.forEach((cat) => box.appendChild(toggleChip(cat.name, cat.nameEn, cat.nameEn)));
+
+    custom.forEach((c) => {
+      const key = "custom:" + c.id;
+      const group = document.createElement("span");
+      group.className = "own-chip";
+      const playable = isPlayable(c);
+      const chip = playable
+        ? toggleChip(customName(c), c.words.length + " words", key)
+        : makeChip(customName(c), "Add " + MIN_CUSTOM_WORDS + "+ words", false, () => openEditor(c.id));
+      if (!playable) chip.classList.add("unready");
+      chip.classList.add("own");
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "chip-edit";
+      edit.textContent = "Edit";
+      edit.setAttribute("aria-label", "Edit " + customName(c));
+      edit.addEventListener("click", () => openEditor(c.id));
+      group.appendChild(chip);
+      group.appendChild(edit);
+      box.appendChild(group);
+    });
+
+    const add = makeChip("+ New category", "", false, () => openEditor(null));
+    add.classList.add("new");
+    box.appendChild(add);
+  }
+  function toggleChip(label, sub, key) {
+    const on = settings.categories.includes(key);
+    return makeChip(label, sub, on, () => {
+      if (on && settings.categories.length === 1) return; // keep the last one
+      settings.categories = on
+        ? settings.categories.filter((n) => n !== key)
+        : settings.categories.concat(key);
+      saveSettings();
+      renderCategories();
     });
   }
   function makeChip(label, sub, on, onClick) {
@@ -187,23 +260,193 @@
   // Random category from the selected ones, then a random word from it,
   // without repeats until every word in the selected categories has been used.
   function pickWord() {
-    const pool = [];
-    CATEGORIES.forEach((cat, ci) => {
-      if (settings.categories.includes(cat.nameEn)) pool.push(ci);
-    });
-    const unused = (ci) => CATEGORIES[ci].words.map((w, wi) => wi).filter((wi) => !usedWords.has(ci + ":" + wi));
-    let open = pool.filter((ci) => unused(ci).length);
+    const pool = allCategories().filter((c) => settings.categories.includes(c.key));
+    const unused = (cat) => cat.words.map((w, wi) => wi).filter((wi) => !usedWords.has(cat.key + ":" + wi));
+    let open = pool.filter((cat) => unused(cat).length);
     if (!open.length) {
-      pool.forEach((ci) => CATEGORIES[ci].words.forEach((w, wi) => usedWords.delete(ci + ":" + wi)));
+      pool.forEach((cat) => cat.words.forEach((w, wi) => usedWords.delete(cat.key + ":" + wi)));
       open = pool;
     }
-    const ci = open[randInt(open.length)];
-    const choices = unused(ci);
+    const cat = open[randInt(open.length)];
+    const choices = unused(cat);
     const wi = choices[randInt(choices.length)];
-    usedWords.add(ci + ":" + wi);
-    return { category: CATEGORIES[ci], word: CATEGORIES[ci].words[wi] };
+    usedWords.add(cat.key + ":" + wi);
+    return { category: cat, word: cat.words[wi] };
   }
 
+  // ---------- custom category editor ----------
+  // Every change is saved straight away; "Save" just returns to setup.
+  function openEditor(id) {
+    editing = custom.find((c) => c.id === id) || null;
+    if (!editing) {
+      editing = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: DEFAULT_CUSTOM_NAME, words: [] };
+      custom.push(editing);
+      saveCustom();
+    }
+    lastCount = editing.words.length;
+    $("custom-name").value = editing.name;
+    $("custom-add").value = "";
+    $("custom-paste").value = "";
+    $("paste-box").hidden = true;
+    $("btn-paste-toggle").setAttribute("aria-expanded", "false");
+    setEditorNote("");
+    renderWords();
+    show("custom");
+  }
+  function closeEditor() {
+    if (editing && !editing.words.length) {
+      custom = custom.filter((c) => c !== editing); // nothing was added: drop the empty category
+    } else if (editing && !editing.name.trim()) {
+      editing.name = DEFAULT_CUSTOM_NAME;
+    }
+    saveCustom();
+    editing = null;
+    cleanSelection();
+    renderCategories();
+    show("setup");
+  }
+  function changed() {
+    saveCustom();
+    // A category that just reached the minimum becomes selected.
+    const key = "custom:" + editing.id;
+    if (lastCount < MIN_CUSTOM_WORDS && isPlayable(editing) && !settings.categories.includes(key)) {
+      settings.categories.push(key);
+      saveSettings();
+    }
+    lastCount = editing.words.length;
+    renderWords();
+  }
+  function setEditorNote(text) { $("custom-note").textContent = text; }
+
+  function normWord(t) { return t.trim().toLowerCase(); }
+  // Add one word; returns false when it is blank or already in the list.
+  function addWord(word, wordEn, hint, hintEn) {
+    word = (word || "").trim();
+    if (!word) return false;
+    if (editing.words.some((w) => normWord(w.word) === normWord(word))) return false;
+    editing.words.push({ word: word, wordEn: (wordEn || "").trim(), hint: (hint || "").trim(), hintEn: (hintEn || "").trim() });
+    return true;
+  }
+  function quickAdd() {
+    const input = $("custom-add");
+    const text = input.value.trim();
+    if (!text) return;
+    if (addWord(text)) {
+      setEditorNote("");
+      input.value = "";
+      changed();
+    } else {
+      setEditorNote("\u201c" + text + "\u201d is already in this list.");
+    }
+    input.focus();
+  }
+  function pasteAdd() {
+    const lines = $("custom-paste").value.split(/\r?\n/);
+    let added = 0, skipped = 0;
+    lines.forEach((line) => {
+      if (!line.trim()) return;
+      const parts = line.split(",");
+      if (addWord(parts[0], parts[1], parts[2], parts[3])) added++;
+      else skipped++;
+    });
+    $("custom-paste").value = "";
+    setEditorNote(added + (added === 1 ? " word" : " words") + " added" + (skipped ? ", " + skipped + " skipped as duplicates" : "") + ".");
+    changed();
+  }
+
+  function renderWords() {
+    const n = editing.words.length;
+    $("custom-count").textContent = n;
+    $("custom-min").textContent = n < MIN_CUSTOM_WORDS ? "Add at least " + MIN_CUSTOM_WORDS + " words to play this category." : "";
+    const box = $("custom-words");
+    box.innerHTML = "";
+    editing.words.forEach((w, i) => {
+      const row = document.createElement("div");
+      row.className = "word-row";
+
+      const head = document.createElement("div");
+      head.className = "word-head";
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "word-toggle";
+      toggle.setAttribute("aria-expanded", "false");
+      const label = document.createElement("span");
+      label.className = "word-label";
+      label.textContent = w.word;
+      const extra = document.createElement("span");
+      extra.className = "word-extra";
+      extra.textContent = [w.wordEn, w.hint ? "Hint: " + w.hint : ""].filter(Boolean).join(", ") || "Add Thanglish or a hint";
+      toggle.appendChild(label);
+      toggle.appendChild(extra);
+
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "remove";
+      remove.textContent = "×";
+      remove.setAttribute("aria-label", "Remove " + w.word);
+      remove.addEventListener("click", () => {
+        editing.words.splice(i, 1);
+        changed();
+      });
+      head.appendChild(toggle);
+      head.appendChild(remove);
+
+      const details = document.createElement("div");
+      details.className = "word-details";
+      details.hidden = true;
+      [["wordEn", "Thanglish"], ["hint", "Hint for the imposter"], ["hintEn", "Hint in Thanglish"]].forEach(([field, text]) => {
+        const lab = document.createElement("label");
+        lab.className = "field small-field";
+        const span = document.createElement("span");
+        span.textContent = text;
+        const input = document.createElement("input");
+        input.type = "text";
+        input.maxLength = 40;
+        input.value = w[field];
+        input.addEventListener("input", () => {
+          w[field] = input.value.trim();
+          extra.textContent = [w.wordEn, w.hint ? "Hint: " + w.hint : ""].filter(Boolean).join(", ") || "Add Thanglish or a hint";
+          saveCustom();
+        });
+        lab.appendChild(span);
+        lab.appendChild(input);
+        details.appendChild(lab);
+      });
+      toggle.addEventListener("click", () => {
+        details.hidden = !details.hidden;
+        toggle.setAttribute("aria-expanded", details.hidden ? "false" : "true");
+        row.classList.toggle("open", !details.hidden);
+      });
+
+      row.appendChild(head);
+      row.appendChild(details);
+      box.appendChild(row);
+    });
+  }
+
+  $("custom-name").addEventListener("input", (e) => { editing.name = e.target.value; saveCustom(); });
+  $("btn-custom-add").addEventListener("click", quickAdd);
+  $("custom-add").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); quickAdd(); } });
+  $("btn-paste-toggle").addEventListener("click", () => {
+    const box = $("paste-box");
+    box.hidden = !box.hidden;
+    $("btn-paste-toggle").setAttribute("aria-expanded", box.hidden ? "false" : "true");
+    if (!box.hidden) $("custom-paste").focus();
+  });
+  $("btn-paste-add").addEventListener("click", pasteAdd);
+  $("btn-delete-category").addEventListener("click", () => {
+    if (!window.confirm("Delete \u201c" + customName(editing) + "\u201d and all its words?")) return;
+    custom = custom.filter((c) => c !== editing);
+    editing = null;
+    saveCustom();
+    cleanSelection();
+    renderCategories();
+    show("setup");
+  });
+  $("btn-custom-back").addEventListener("click", closeEditor);
+  $("btn-custom-save").addEventListener("click", closeEditor);
+
+  // ---------- round ----------
   function startRound() {
     const pick = pickWord();
     const entry = pick.word;
@@ -241,7 +484,7 @@
       $("reveal-label").textContent = playerName(round.current) + ", you are the…";
       $("reveal-word").textContent = "Imposter! 🤫";
       $("reveal-translit").textContent = "";
-      if (settings.hint) {
+      if (settings.hint && round.entry.hint) {
         addLine(hintBox, "muted", "Your hint");
         addLine(hintBox, "muted small", categoryLabel(round.category));
         addLine(hintBox, "hint-word", round.entry.hint);
