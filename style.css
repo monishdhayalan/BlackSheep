@@ -199,7 +199,8 @@ h1 {
 
 .secret {
   font-size: clamp(2.6rem, 14vw, 4.2rem); font-weight: 800; line-height: 1.05;
-  margin: 10px 0 4px; overflow-wrap: anywhere; color: var(--ink);
+  margin: 10px 0 4px; color: var(--ink);
+  white-space: nowrap; /* one line; app.js shrinks long words to fit */
 }
 .translit { font-size: var(--t-xl); font-weight: 600; color: var(--ink-soft); }
 .translit:empty { display: none; }
@@ -207,7 +208,7 @@ h1 {
 .hint { margin-top: 18px; padding-top: 16px; border-top: 2px dashed var(--line); }
 .hint:empty { display: none; }
 .hint p { margin: 2px 0; }
-.hint-word { font-family: var(--display); font-size: var(--t-2xl); font-weight: 800; line-height: 1.1; margin-top: 8px !important; }
+.hint-word { font-family: var(--display); font-size: var(--t-2xl); font-weight: 800; line-height: 1.1; margin-top: 8px !important; white-space: nowrap; }
 
 .reveal.imposter { background: var(--kumkum); border-color: var(--ink); color: var(--paper); }
 .reveal.imposter .secret,

@@ -43,6 +43,21 @@
     $("screen-" + name).classList.add("active");
     window.scrollTo(0, 0);
   }
+  // Keep a word on one line: shrink its font until it fits the card's width.
+  function fitText(el) {
+    if (!el) return;
+    el.style.fontSize = "";
+    let size = parseFloat(getComputedStyle(el).fontSize);
+    while (el.scrollWidth > el.clientWidth && size > 16) {
+      size = Math.max(16, size * 0.94);
+      el.style.fontSize = size + "px";
+    }
+  }
+  function fitAll() {
+    document.querySelectorAll(".screen.active .secret, .screen.active .hint-word").forEach(fitText);
+  }
+  window.addEventListener("resize", fitAll);
+
   function randInt(n) { return Math.floor(Math.random() * n); }
   function shuffle(arr) {
     const a = arr.slice();
@@ -244,6 +259,7 @@
     const last = round.current === settings.players - 1;
     $("btn-hide").textContent = last ? "Hide and start discussing" : "Hide and pass on";
     show("reveal");
+    fitAll();
   }
 
   function nextPlayer() {
@@ -317,6 +333,7 @@
     const names = [...round.imposters].sort((a, b) => a - b).map(playerName).join(", ");
     $("result-imposters").textContent = (round.imposters.size > 1 ? "Imposters: " : "Imposter: ") + names;
     show("result");
+    fitAll();
   }
 
   // ---------- wiring ----------
