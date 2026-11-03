@@ -95,7 +95,9 @@ h2 { font-size: 1.3rem; margin: 0 0 12px; font-weight: 800; }
 .secret { font-size: 2.6rem; margin: 8px 0; word-break: break-word; }
 .reveal.imposter { border-color: var(--danger); background: rgba(255, 93, 115, .12); }
 .reveal.imposter .secret { color: var(--danger); }
-.hint { color: var(--muted); margin: 8px 0 0; }
+.translit { color: var(--muted); font-size: 1.2rem; font-style: italic; margin: -4px 0 0; }
+.translit:empty { display: none; }
+.hint { color: var(--muted); margin: 8px 0 0; white-space: pre-line; }
 
 .timer { font-size: 3rem; font-weight: 800; margin: 16px 0 8px; font-variant-numeric: tabular-nums; }
 .timer.done { color: var(--danger); }

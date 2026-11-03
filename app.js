@@ -42,7 +42,7 @@
     return a;
   }
   function maxImposters(players) { return Math.max(1, Math.floor((players - 1) / 2)); }
-  function playerName(i) { return (settings.names[i] || "").trim() || "வீரர் " + (i + 1); }
+  function playerName(i) { return (settings.names[i] || "").trim() || "Player " + (i + 1); }
 
   // ---------- setup screen ----------
   function renderSetup() {
@@ -57,7 +57,7 @@
       const input = document.createElement("input");
       input.type = "text";
       input.maxLength = 20;
-      input.placeholder = "வீரர் " + (i + 1);
+      input.placeholder = "Player " + (i + 1);
       input.value = settings.names[i] || "";
       input.addEventListener("input", () => { settings.names[i] = input.value; saveSettings(); });
       box.appendChild(input);
@@ -91,7 +91,9 @@
     const imposters = new Set(order.slice(0, settings.imposters));
     round = {
       word: entry.word,
+      wordTh: entry.wordTh || "",
       category: entry.category,
+      categoryTh: entry.categoryTh || "",
       imposters: imposters,
       current: 0,
       firstSpeaker: randInt(settings.players)
@@ -116,18 +118,20 @@
     const card = $("reveal-card");
     card.classList.toggle("imposter", isImposter);
     if (isImposter) {
-      $("reveal-label").textContent = playerName(round.current) + ", நீங்கள் தான்…";
-      $("reveal-word").textContent = "கள்ளன்! 🤫";
+      $("reveal-label").textContent = playerName(round.current) + ", you are the…";
+      $("reveal-word").textContent = "Imposter! 🤫";
+      $("reveal-word-th").textContent = "";
       $("reveal-hint").textContent = settings.hint
-        ? "குறிப்பு: வகை “" + round.category + "”"
-        : "யாருக்கும் தெரியாமல் கலந்துகொள்ளுங்கள்!";
+        ? "Hint: the category is\n" + round.category + "\n" + round.categoryTh
+        : "Blend in and don't get caught!";
     } else {
-      $("reveal-label").textContent = playerName(round.current) + ", உங்கள் வார்த்தை";
+      $("reveal-label").textContent = playerName(round.current) + ", your word is";
       $("reveal-word").textContent = round.word;
-      $("reveal-hint").textContent = "இதை யாரிடமும் சொல்லாதீர்கள்!";
+      $("reveal-word-th").textContent = round.wordTh;
+      $("reveal-hint").textContent = "Don't tell anyone!";
     }
     const last = round.current === settings.players - 1;
-    $("btn-hide").textContent = last ? "மறைத்து, விவாதத்தைத் தொடங்கு" : "மறைத்து, அடுத்தவருக்குக் கொடு";
+    $("btn-hide").textContent = last ? "Hide & start the discussion" : "Hide & pass to next player";
     show("reveal");
   }
 
@@ -152,14 +156,14 @@
     $("first-speaker").textContent = playerName(round.firstSpeaker);
     $("timer").textContent = formatTime(DISCUSS_SECONDS);
     $("timer").classList.remove("done");
-    $("btn-timer").textContent = "டைமர் தொடங்கு";
+    $("btn-timer").textContent = "Start timer";
     $("btn-timer").disabled = false;
     show("discuss");
   }
   $("btn-timer").addEventListener("click", () => {
     if (timerId) return;
     let left = DISCUSS_SECONDS;
-    $("btn-timer").textContent = "ஓடிக்கொண்டிருக்கிறது…";
+    $("btn-timer").textContent = "Running…";
     $("btn-timer").disabled = true;
     timerId = setInterval(() => {
       left--;
@@ -167,7 +171,7 @@
       if (left <= 0) {
         stopTimer();
         $("timer").classList.add("done");
-        $("btn-timer").textContent = "நேரம் முடிந்தது!";
+        $("btn-timer").textContent = "Time's up!";
         if (navigator.vibrate) navigator.vibrate(400);
       }
     }, 1000);
@@ -191,13 +195,14 @@
   function showResult(votedOut) {
     const caught = round.imposters.has(votedOut);
     $("result-emoji").textContent = caught ? "🎉" : "😈";
-    $("result-title").textContent = caught ? "கள்ளன் பிடிபட்டான்!" : "கள்ளன் தப்பிவிட்டான்!";
+    $("result-title").textContent = caught ? "Imposter caught!" : "The imposter escaped!";
     $("result-detail").textContent = caught
-      ? playerName(votedOut) + " தான் கள்ளன். மற்றவர்கள் வெற்றி!"
-      : playerName(votedOut) + " கள்ளன் இல்லை. கள்ளன் வெற்றி!";
+      ? playerName(votedOut) + " was the imposter. Everyone else wins!"
+      : playerName(votedOut) + " wasn't the imposter. The imposter wins!";
     $("result-word").textContent = round.word;
+    $("result-word-th").textContent = round.wordTh;
     const names = [...round.imposters].sort((a, b) => a - b).map(playerName).join(", ");
-    $("result-imposters").textContent = (round.imposters.size > 1 ? "கள்ளர்கள்: " : "கள்ளன்: ") + names;
+    $("result-imposters").textContent = (round.imposters.size > 1 ? "Imposters: " : "Imposter: ") + names;
     show("result");
   }
 
