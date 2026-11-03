@@ -3,7 +3,7 @@
 
   const MIN_PLAYERS = 3;
   const MAX_PLAYERS = 12;
-  const STORAGE_KEY = "kallan-settings";
+  const STORAGE_KEY = "imposter-settings";
   const DISCUSS_SECONDS = 180;
 
   const $ = (id) => document.getElementById(id);
@@ -40,6 +40,12 @@
       [a[i], a[j]] = [a[j], a[i]];
     }
     return a;
+  }
+  function addLine(parent, cls, text) {
+    const p = document.createElement("p");
+    if (cls) p.className = cls;
+    p.textContent = text;
+    parent.appendChild(p);
   }
   function maxImposters(players) { return Math.max(1, Math.floor((players - 1) / 2)); }
   function playerName(i) { return (settings.names[i] || "").trim() || "Player " + (i + 1); }
@@ -90,10 +96,7 @@
     const order = shuffle([...Array(settings.players).keys()]);
     const imposters = new Set(order.slice(0, settings.imposters));
     round = {
-      word: entry.word,
-      wordTh: entry.wordTh || "",
-      category: entry.category,
-      categoryTh: entry.categoryTh || "",
+      entry: entry,
       imposters: imposters,
       current: 0,
       firstSpeaker: randInt(settings.players)
@@ -117,21 +120,27 @@
     const isImposter = round.imposters.has(round.current);
     const card = $("reveal-card");
     card.classList.toggle("imposter", isImposter);
+    const hintBox = $("reveal-hint");
+    hintBox.innerHTML = "";
     if (isImposter) {
       $("reveal-label").textContent = playerName(round.current) + ", you are the…";
       $("reveal-word").textContent = "Imposter! 🤫";
-      $("reveal-word-th").textContent = "";
-      $("reveal-hint").textContent = settings.hint
-        ? "Hint: the category is\n" + round.category + "\n" + round.categoryTh
-        : "Blend in and don't get caught!";
+      $("reveal-translit").textContent = "";
+      if (settings.hint) {
+        addLine(hintBox, "muted", "Your hint");
+        addLine(hintBox, "hint-word", round.entry.hint);
+        addLine(hintBox, "translit", round.entry.hintEn);
+      } else {
+        addLine(hintBox, "", "Blend in without getting caught!");
+      }
     } else {
       $("reveal-label").textContent = playerName(round.current) + ", your word is";
-      $("reveal-word").textContent = round.word;
-      $("reveal-word-th").textContent = round.wordTh;
-      $("reveal-hint").textContent = "Don't tell anyone!";
+      $("reveal-word").textContent = round.entry.word;
+      $("reveal-translit").textContent = round.entry.wordEn;
+      addLine(hintBox, "", "Don't tell anyone!");
     }
     const last = round.current === settings.players - 1;
-    $("btn-hide").textContent = last ? "Hide & start the discussion" : "Hide & pass to next player";
+    $("btn-hide").textContent = last ? "Hide and start discussing" : "Hide and pass on";
     show("reveal");
   }
 
@@ -171,7 +180,7 @@
       if (left <= 0) {
         stopTimer();
         $("timer").classList.add("done");
-        $("btn-timer").textContent = "Time's up!";
+        $("btn-timer").textContent = "Time is up!";
         if (navigator.vibrate) navigator.vibrate(400);
       }
     }, 1000);
@@ -198,9 +207,9 @@
     $("result-title").textContent = caught ? "Imposter caught!" : "The imposter escaped!";
     $("result-detail").textContent = caught
       ? playerName(votedOut) + " was the imposter. Everyone else wins!"
-      : playerName(votedOut) + " wasn't the imposter. The imposter wins!";
-    $("result-word").textContent = round.word;
-    $("result-word-th").textContent = round.wordTh;
+      : playerName(votedOut) + " was not the imposter. The imposter wins!";
+    $("result-word").textContent = round.entry.word;
+    $("result-translit").textContent = round.entry.wordEn;
     const names = [...round.imposters].sort((a, b) => a - b).map(playerName).join(", ");
     $("result-imposters").textContent = (round.imposters.size > 1 ? "Imposters: " : "Imposter: ") + names;
     show("result");

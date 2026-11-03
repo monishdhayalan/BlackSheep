@@ -1,10 +1,10 @@
-// Tamil word list. Each entry: the secret word and the category shown to the imposter as a hint,
-// each with a Thanglish (Tamil in English letters) version shown right below it.
+// Word list. Each entry has the secret Tamil word and the hint (category) given to the imposter,
+// each with a Thanglish (Tamil in English letters) version shown below it.
 // Only 5 test words for now; add more entries in the same shape.
 window.WORDS = [
-  { word: "இட்லி", wordTh: "Idli", category: "உணவு", categoryTh: "Unavu" },
-  { word: "யானை", wordTh: "Yaanai", category: "விலங்கு", categoryTh: "Vilangu" },
-  { word: "கோவில்", wordTh: "Kovil", category: "இடம்", categoryTh: "Idam" },
-  { word: "பொங்கல்", wordTh: "Pongal", category: "பண்டிகை", categoryTh: "Pandigai" },
-  { word: "கிரிக்கெட்", wordTh: "Cricket", category: "விளையாட்டு", categoryTh: "Vilaiyaattu" }
+  { word: "இட்லி",       wordEn: "Idli",       hint: "உணவு",       hintEn: "Unavu" },
+  { word: "யானை",       wordEn: "Yaanai",     hint: "விலங்கு",     hintEn: "Vilangu" },
+  { word: "கோவில்",      wordEn: "Kovil",      hint: "இடம்",        hintEn: "Idam" },
+  { word: "பொங்கல்",     wordEn: "Pongal",     hint: "பண்டிகை",     hintEn: "Pandigai" },
+  { word: "கிரிக்கெட்",   wordEn: "Cricket",    hint: "விளையாட்டு",  hintEn: "Vilaiyaattu" }
 ];
