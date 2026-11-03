@@ -70,7 +70,7 @@ Turmeric with a kolam dot grid: `radial-gradient` dots at 22px spacing, fixed. D
 
 ## Components to reuse
 
-Use these before creating anything new: `.panel`, `.panel-head` with `.mini` text buttons, `.btn` / `.btn.primary` / `.btn.ghost` / `.btn.big`, `.chip` / `.chip.on` / `.chip-sub`, `.own-chip` + `.chip-edit` (custom categories), `.row` + `.toggle` switch, `.stepper`, `.name-row`, `.field`, `.quick-add`, `.word-row` + `.word-edit`, `.word-card` (edit one word), `.field-label` / `.field-help`, `.saved-status`, `.link` / `.link.danger`, `.back`, `.banner` / `.banner.reveal` / `.reveal.imposter`, `.translit`, `.hint` / `.hint-word`, `.actions`, `.stage`, `.progress`.
+Use these before creating anything new: `.panel`, `.panel-head` with `.mini` text buttons, `.btn` / `.btn.primary` / `.btn.ghost` / `.btn.big`, `.chip` / `.chip.on` / `.chip-sub`, `.own-chip` + `.chip-edit` (custom categories), `.row` + `.toggle` switch, `.stepper`, `.name-row`, `.field`, `.quick-add`, `.word-row` + `.word-edit`, `.word-card` (edit one word), `.field-label` / `.field-help`, `.saved-status`, `.export-box` + `.export-checks` + `.export-text` (export for contributing), `.text-link` (inline link), `.link` / `.link.danger`, `.back`, `.banner` / `.banner.reveal` / `.reveal.imposter`, `.translit`, `.hint` / `.hint-word`, `.actions`, `.stage`, `.progress`.
 
 ### Editing one item in a list
 
@@ -82,6 +82,16 @@ When a list item has optional details, such as a custom word's Thanglish and hin
 - Every field has a visible `.field-label`, and a `.field-help` line where it helps. Enter moves to the next field and closes the card on the last one.
 - Changes save as you type, and a green "Saved" `.saved-status` (aria-live) confirms it. A compact primary "Done" closes the card and returns focus to that item's Edit button.
 - A freshly added item gets a gentle prompt ("Add Thanglish or a hint?") instead of opening automatically, so quick entry stays fast.
+
+### Export for contributing
+
+The custom category editor has an "Export for contributing" `.link`. It opens a `.panel.export-box` with:
+- Plain-sentence checks (`.export-checks`). Only "Add at least 2 words to export." blocks the export.
+- A read-only `.export-text` textarea in the body font, small. It may scroll sideways inside itself, but the page never does.
+- A Copy (primary, compact) button and a Download file (ghost) button, with a "Copied" status.
+- A `.text-link` to the README's contributing section.
+
+The snippet must match the `words.js` shape exactly, with JSON-escaped strings. `tools/check-words.js` validates `words.js` for contributors.
 
 ## Motion
 

@@ -46,6 +46,7 @@
       return saved.filter((c) => c && typeof c.id === "string" && Array.isArray(c.words)).map((c) => ({
         id: c.id,
         name: String(c.name || ""),
+        nameEn: String(c.nameEn || ""),
         words: c.words.filter((w) => w && String(w.word || "").trim()).map((w) => ({
           word: String(w.word).trim(),
           wordEn: String(w.wordEn || ""),
@@ -59,6 +60,7 @@
   }
   function saveCustom() {
     try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom)); } catch (e) { /* ignore */ }
+    if (editing && !$("export-box").hidden) refreshExport();
   }
   function customName(c) { return c.name.trim() || DEFAULT_CUSTOM_NAME; }
   function isPlayable(c) { return c.words.length >= MIN_CUSTOM_WORDS; }
@@ -67,7 +69,7 @@
     const own = custom.filter(isPlayable).map((c) => ({
       key: "custom:" + c.id,
       name: customName(c),
-      nameEn: "",
+      nameEn: c.nameEn.trim(),
       words: c.words
     }));
     return CATEGORIES.map((c) => Object.assign({ key: c.nameEn }, c)).concat(own);
@@ -276,7 +278,7 @@
   function openEditor(id) {
     editing = custom.find((c) => c.id === id) || null;
     if (!editing) {
-      editing = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: DEFAULT_CUSTOM_NAME, words: [] };
+      editing = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: DEFAULT_CUSTOM_NAME, nameEn: "", words: [] };
       custom.push(editing);
       saveCustom();
     }
@@ -284,6 +286,9 @@
     openWord = -1;
     newWord = -1;
     $("custom-name").value = editing.name;
+    $("custom-name-en").value = editing.nameEn;
+    $("export-box").hidden = true;
+    $("btn-export-toggle").setAttribute("aria-expanded", "false");
     $("custom-add").value = "";
     $("custom-paste").value = "";
     $("paste-box").hidden = true;
@@ -532,6 +537,98 @@
     card.appendChild(foot);
     return card;
   }
+
+  // ---------- export for contributors ----------
+  // Turns a custom category into the exact shape used in words.js, ready to paste into a pull request.
+  function exportText(c) {
+    const q = (t) => JSON.stringify(String(t || "").trim());
+    const name = customName(c);
+    const lines = c.words.map((w) => "      { word: " + q(w.word) + ", wordEn: " + q(w.wordEn) +
+      ", hint: " + q(w.hint) + ", hintEn: " + q(w.hintEn) + " }");
+    return "  {\n" +
+      "    name: " + q(name) + ", nameEn: " + q(c.nameEn) + ",\n" +
+      "    words: [\n" + lines.join(",\n") + "\n" +
+      "    ]\n" +
+      "  },\n";
+  }
+  // Plain-sentence checks shown above the export. Only "fewer than 2 words" blocks it.
+  function exportChecks(c) {
+    if (c.words.length < MIN_CUSTOM_WORDS) return { block: true, lines: ["Add at least " + MIN_CUSTOM_WORDS + " words to export."] };
+    const lines = [];
+    const count = (n, one, many) => n + " " + (n === 1 ? one : many);
+    const noTh = c.words.filter((w) => !w.wordEn.trim()).length;
+    const noHint = c.words.filter((w) => !w.hint.trim()).length;
+    if (noTh) lines.push(count(noTh, "word has", "words have") + " no Thanglish.");
+    if (noHint) lines.push(count(noHint, "word has", "words have") + " no hint.");
+    if (!c.nameEn.trim()) lines.push("Add a name in Thanglish.");
+    const builtIn = new Set();
+    CATEGORIES.forEach((cat) => cat.words.forEach((w) => builtIn.add(normWord(w.word))));
+    const dupes = c.words.filter((w) => builtIn.has(normWord(w.word))).map((w) => w.word);
+    if (dupes.length) lines.push(count(dupes.length, "word is", "words are") + " already in the built-in list: " + dupes.join(", ") + ".");
+    return { block: false, lines: lines };
+  }
+  function refreshExport() {
+    const checks = exportChecks(editing);
+    const box = $("export-checks");
+    box.innerHTML = "";
+    checks.lines.forEach((t) => {
+      const p = document.createElement("p");
+      p.textContent = t;
+      box.appendChild(p);
+    });
+    box.className = checks.block ? "export-checks form-error" : "export-checks";
+    $("export-text").value = checks.block ? "" : exportText(editing);
+    $("export-text").disabled = checks.block;
+    $("btn-export-copy").disabled = checks.block;
+    $("btn-export-download").disabled = checks.block;
+  }
+  function exportSlug() {
+    const base = (editing.nameEn || customName(editing)).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    return base || "category";
+  }
+  function flash(text) {
+    const el = $("export-status");
+    el.textContent = text;
+    clearTimeout(flash.t);
+    flash.t = setTimeout(() => { el.textContent = ""; }, 2000);
+  }
+  $("btn-export-toggle").addEventListener("click", () => {
+    const box = $("export-box");
+    box.hidden = !box.hidden;
+    $("btn-export-toggle").setAttribute("aria-expanded", box.hidden ? "false" : "true");
+    if (!box.hidden) {
+      refreshExport();
+      box.scrollIntoView({ block: "nearest" });
+    }
+  });
+  $("btn-export-copy").addEventListener("click", () => {
+    const text = $("export-text").value;
+    const fallback = () => {
+      const area = $("export-text");
+      area.focus();
+      area.select();
+      let ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      flash(ok ? "Copied" : "Select the text and copy it");
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => flash("Copied"), fallback);
+    } else {
+      fallback();
+    }
+  });
+  $("btn-export-download").addEventListener("click", () => {
+    const blob = new Blob([$("export-text").value], { type: "text/javascript;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = exportSlug() + ".js";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    flash("Downloaded " + a.download);
+  });
+  $("custom-name-en").addEventListener("input", (e) => { editing.nameEn = e.target.value.trim(); saveCustom(); });
 
   $("custom-name").addEventListener("input", (e) => { editing.name = e.target.value; saveCustom(); });
   $("btn-custom-add").addEventListener("click", quickAdd);

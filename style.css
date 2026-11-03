@@ -344,3 +344,20 @@ h1 {
   .panel-head h2 { font-size: var(--t-lg); }
   .mini { font-size: .78rem; padding: 0 4px; }
 }
+
+/* ---------- export for contributors ---------- */
+.name-en { margin-top: 14px; }
+.export-link { align-self: flex-start; padding-left: 4px; }
+.export-box { display: grid; gap: 12px; }
+.export-checks:empty { display: none; }
+.export-checks { display: grid; gap: 2px; font-size: var(--t-sm); font-weight: 600; color: var(--ink-soft); }
+.export-checks.form-error { color: var(--kumkum); margin: 0; }
+.field textarea.export-text {
+  font-family: var(--body); font-size: var(--t-sm); font-weight: 400; line-height: 1.5;
+  white-space: pre; overflow-x: auto; overflow-wrap: normal;
+}
+.export-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.export-actions .btn { min-height: 44px; }
+.text-link { color: var(--ink); font-weight: 600; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.export-actions .btn.primary { box-shadow: 3px 3px 0 var(--kumkum); }
+.export-actions .btn:disabled { opacity: .45; box-shadow: none; cursor: default; }
