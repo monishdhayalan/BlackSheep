@@ -305,6 +305,7 @@
 
   function showResult(votedOut) {
     const caught = round.imposters.has(votedOut);
+    $("screen-result").classList.toggle("caught", caught);
     $("result-emoji").textContent = caught ? "🎉" : "😈";
     $("result-title").textContent = caught ? "Imposter caught!" : "The imposter escaped!";
     $("result-detail").textContent = caught
