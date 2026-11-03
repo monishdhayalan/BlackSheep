@@ -281,6 +281,8 @@
       saveCustom();
     }
     lastCount = editing.words.length;
+    openWord = -1;
+    newWord = -1;
     $("custom-name").value = editing.name;
     $("custom-add").value = "";
     $("custom-paste").value = "";
@@ -331,6 +333,8 @@
     if (addWord(text)) {
       setEditorNote("");
       input.value = "";
+      openWord = -1;
+      newWord = editing.words.length - 1;
       changed();
     } else {
       setEditorNote("\u201c" + text + "\u201d is already in this list.");
@@ -351,74 +355,182 @@
     changed();
   }
 
+  // One word's details (Thanglish and hint) are open for editing at a time.
+  let openWord = -1;
+  let newWord = -1; // the word just added with quick add, which gets a gentle prompt
+  let savedTimer = null;
+  function openWordCard(i) {
+    openWord = i;
+    newWord = -1;
+    renderWords();
+    const card = $("word-card-" + i);
+    if (!card) return;
+    const inputs = [...card.querySelectorAll("input")];
+    const w = editing.words[i];
+    // First empty field among Thanglish and the hint fields, else Thanglish.
+    const target = ["wordEn", "hint", "hintEn"].find((k) => !w[k]) || "wordEn";
+    const input = card.querySelector('[data-field="' + target + '"]') || inputs[0];
+    input.focus({ preventScroll: true });
+    card.scrollIntoView({ block: "center" });
+  }
+  function closeWordCard() {
+    const i = openWord;
+    openWord = -1;
+    renderWords();
+    const btn = $("word-edit-" + i);
+    if (btn) btn.focus({ preventScroll: true });
+  }
+  function showSaved(el) {
+    el.textContent = "Saved";
+    clearTimeout(savedTimer);
+    savedTimer = setTimeout(() => { el.textContent = ""; }, 1500);
+  }
+  function looksLatin(t) { return /^[\x00-\x7F]+$/.test(t); }
+
   function renderWords() {
     const n = editing.words.length;
+    if (openWord >= n) openWord = -1;
+    if (newWord >= n) newWord = -1;
     $("custom-count").textContent = n;
     $("custom-min").textContent = n < MIN_CUSTOM_WORDS ? "Add at least " + MIN_CUSTOM_WORDS + " words to play this category." : "";
     const box = $("custom-words");
     box.innerHTML = "";
-    editing.words.forEach((w, i) => {
-      const row = document.createElement("div");
-      row.className = "word-row";
+    box.classList.toggle("editing", openWord >= 0);
+    editing.words.forEach((w, i) => (i === openWord ? box.appendChild(wordCard(w, i)) : box.appendChild(wordRow(w, i))));
+  }
 
-      const head = document.createElement("div");
-      head.className = "word-head";
-      const toggle = document.createElement("button");
-      toggle.type = "button";
-      toggle.className = "word-toggle";
-      toggle.setAttribute("aria-expanded", "false");
-      const label = document.createElement("span");
-      label.className = "word-label";
-      label.textContent = w.word;
-      const extra = document.createElement("span");
-      extra.className = "word-extra";
-      extra.textContent = [w.wordEn, w.hint ? "Hint: " + w.hint : ""].filter(Boolean).join(", ") || "Add Thanglish or a hint";
-      toggle.appendChild(label);
-      toggle.appendChild(extra);
+  function line(cls, text) {
+    const p = document.createElement("p");
+    p.className = cls;
+    p.textContent = text;
+    return p;
+  }
 
-      const remove = document.createElement("button");
-      remove.type = "button";
-      remove.className = "remove";
-      remove.textContent = "×";
-      remove.setAttribute("aria-label", "Remove " + w.word);
-      remove.addEventListener("click", () => {
-        editing.words.splice(i, 1);
-        changed();
-      });
-      head.appendChild(toggle);
-      head.appendChild(remove);
+  function wordRow(w, i) {
+    const row = document.createElement("div");
+    row.className = "word-row";
+    const hasDetails = !!(w.wordEn || w.hint || w.hintEn);
 
-      const details = document.createElement("div");
-      details.className = "word-details";
-      details.hidden = true;
-      [["wordEn", "Thanglish"], ["hint", "Hint for the imposter"], ["hintEn", "Hint in Thanglish"]].forEach(([field, text]) => {
-        const lab = document.createElement("label");
-        lab.className = "field small-field";
-        const span = document.createElement("span");
-        span.textContent = text;
-        const input = document.createElement("input");
-        input.type = "text";
-        input.maxLength = 40;
-        input.value = w[field];
-        input.addEventListener("input", () => {
-          w[field] = input.value.trim();
-          extra.textContent = [w.wordEn, w.hint ? "Hint: " + w.hint : ""].filter(Boolean).join(", ") || "Add Thanglish or a hint";
-          saveCustom();
-        });
-        lab.appendChild(span);
-        lab.appendChild(input);
-        details.appendChild(lab);
-      });
-      toggle.addEventListener("click", () => {
-        details.hidden = !details.hidden;
-        toggle.setAttribute("aria-expanded", details.hidden ? "false" : "true");
-        row.classList.toggle("open", !details.hidden);
-      });
+    const text = document.createElement("button");
+    text.type = "button";
+    text.className = "word-text";
+    text.tabIndex = -1; // the Edit button is the keyboard target; this is a bigger tap area
+    text.appendChild(line("word-label", w.word));
+    if (w.wordEn) text.appendChild(line("word-meta", "Thanglish: " + w.wordEn));
+    if (w.hint || w.hintEn) text.appendChild(line("word-meta", "Hint: " + (w.hint || w.hintEn) + (w.hint && w.hintEn ? " (" + w.hintEn + ")" : "")));
+    if (!hasDetails) text.appendChild(line("word-meta muted-meta", i === newWord ? "Add Thanglish or a hint?" : "No Thanglish or hint yet"));
+    text.addEventListener("click", () => openWordCard(i));
 
-      row.appendChild(head);
-      row.appendChild(details);
-      box.appendChild(row);
+    const edit = document.createElement("button");
+    edit.type = "button";
+    edit.id = "word-edit-" + i;
+    edit.className = "word-edit" + (i === newWord ? " prompt" : "");
+    edit.textContent = hasDetails ? "Edit" : "Add details";
+    edit.setAttribute("aria-expanded", "false");
+    edit.setAttribute("aria-controls", "word-card-" + i);
+    edit.setAttribute("aria-label", (hasDetails ? "Edit " : "Add details for ") + w.word);
+    edit.addEventListener("click", () => openWordCard(i));
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "remove";
+    remove.textContent = "×";
+    remove.setAttribute("aria-label", "Remove " + w.word);
+    remove.addEventListener("click", () => {
+      if (openWord > i) openWord--;
+      if (newWord === i) newWord = -1; else if (newWord > i) newWord--;
+      editing.words.splice(i, 1);
+      changed();
     });
+
+    row.appendChild(text);
+    row.appendChild(edit);
+    row.appendChild(remove);
+    return row;
+  }
+
+  function wordCard(w, i) {
+    const card = document.createElement("div");
+    card.className = "word-card";
+    card.id = "word-card-" + i;
+    card.setAttribute("role", "group");
+    card.setAttribute("aria-label", "Editing " + w.word);
+
+    const head = document.createElement("div");
+    head.className = "word-card-head";
+    const title = line("word-label", "Editing " + w.word);
+    head.appendChild(title);
+    card.appendChild(head);
+
+    const status = document.createElement("p");
+    status.className = "saved-status";
+    status.setAttribute("aria-live", "polite");
+
+    const inputs = [];
+    const field = (key, labelText, helpText, placeholder) => {
+      const lab = document.createElement("label");
+      lab.className = "field";
+      lab.appendChild(line("field-label", labelText));
+      if (helpText) lab.appendChild(line("field-help", helpText));
+      const input = document.createElement("input");
+      input.type = "text";
+      input.maxLength = 40;
+      input.placeholder = placeholder;
+      input.value = w[key];
+      input.dataset.field = key;
+      input.enterKeyHint = "next";
+      inputs.push(input);
+      lab.appendChild(input);
+      card.appendChild(lab);
+      return input;
+    };
+
+    const wordInput = field("word", "Word", "", "The secret word");
+    const wordError = line("form-error", "");
+    wordError.setAttribute("role", "alert");
+    card.appendChild(wordError);
+    wordInput.addEventListener("input", () => {
+      const v = wordInput.value.trim();
+      const clash = editing.words.some((o, k) => k !== i && normWord(o.word) === normWord(v));
+      if (!v) { wordError.textContent = "The word can't be empty."; return; }
+      if (clash) { wordError.textContent = "\u201c" + v + "\u201d is already in this list."; return; }
+      wordError.textContent = "";
+      w.word = v;
+      title.textContent = "Editing " + v;
+      card.setAttribute("aria-label", "Editing " + v);
+      saveCustom();
+      showSaved(status);
+    });
+
+    field("wordEn", "Thanglish", "How you'd type it in English letters.", looksLatin(w.word) ? w.word : "For example, Maambazham");
+    field("hint", "Hint for the imposter", "One or two words that hint without giving it away.", "For example, பழம்");
+    field("hintEn", "Hint in Thanglish", "", "For example, Pazham");
+    inputs.slice(1).forEach((input) => input.addEventListener("input", () => {
+      w[input.dataset.field] = input.value.trim();
+      saveCustom();
+      showSaved(status);
+    }));
+
+    // Enter moves to the next field, and closes the card on the last one.
+    inputs.forEach((input, k) => input.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      if (k < inputs.length - 1) inputs[k + 1].focus();
+      else closeWordCard();
+    }));
+    inputs[inputs.length - 1].enterKeyHint = "done";
+
+    const foot = document.createElement("div");
+    foot.className = "word-foot";
+    foot.appendChild(status);
+    const done = document.createElement("button");
+    done.type = "button";
+    done.className = "btn primary small-btn";
+    done.textContent = "Done";
+    done.addEventListener("click", closeWordCard);
+    foot.appendChild(done);
+    card.appendChild(foot);
+    return card;
   }
 
   $("custom-name").addEventListener("input", (e) => { editing.name = e.target.value; saveCustom(); });

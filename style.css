@@ -277,8 +277,6 @@ h1 {
 .field textarea { padding: 12px 14px; font-weight: 400; resize: vertical; line-height: 1.5; }
 .field input::placeholder, .field textarea::placeholder, .quick-add input::placeholder { color: var(--ink-soft); opacity: .6; font-weight: 400; }
 .field input:focus, .field textarea:focus, .quick-add input:focus { outline: none; border-color: var(--ink); }
-.small-field { font-size: var(--t-sm); gap: 4px; }
-.small-field input { height: 44px; font-size: var(--t-md); }
 
 .quick-add { display: flex; gap: 8px; margin-top: 12px; }
 .quick-add .btn { flex: none; min-height: 48px; padding: 0 18px; box-shadow: 3px 3px 0 var(--kumkum); }
@@ -287,22 +285,43 @@ h1 {
 .form-error { margin-top: 8px; color: var(--kumkum); font-weight: 600; font-size: var(--t-sm); }
 .form-error:empty { display: none; }
 
-.word-list { display: grid; margin-top: 10px; }
-.word-row { border-bottom: 1px dashed var(--line); }
-.word-head { display: flex; align-items: center; gap: 8px; min-height: 60px; }
-.word-toggle {
-  flex: 1; min-width: 0; display: grid; gap: 0; text-align: left;
-  padding: 8px 0; border: 0; background: none; cursor: pointer; color: var(--ink); font: inherit;
+.word-list { display: grid; margin-top: 12px; }
+.word-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px dashed var(--line); transition: opacity .15s ease; }
+.word-text {
+  flex: 1; min-width: 0; min-height: 44px; display: grid; align-content: center; gap: 2px;
+  padding: 4px 0; border: 0; background: none; text-align: left; cursor: pointer; color: var(--ink); font: inherit;
 }
 .word-label { font-family: var(--display); font-size: var(--t-lg); font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
-.word-extra { font-size: var(--t-sm); color: var(--ink-soft); overflow-wrap: anywhere; }
+.word-meta { font-size: var(--t-sm); color: var(--ink); overflow-wrap: anywhere; }
+.muted-meta { color: var(--ink-soft); }
+.word-edit {
+  flex: none; min-height: 44px; padding: 0 14px; border-radius: 999px; cursor: pointer;
+  border: 2px solid var(--ink); background: transparent; color: var(--ink);
+  font-family: var(--display); font-size: var(--t-sm); font-weight: 700; white-space: nowrap;
+}
+.word-edit.prompt { background: var(--ink); color: var(--turmeric); }
 .word-row .remove {
   flex: none; width: 44px; height: 44px; border-radius: 50%;
   border: 2px solid var(--line); background: transparent;
   color: var(--ink-soft); font-size: 1.4rem; line-height: 1; cursor: pointer;
 }
-.word-details { display: grid; gap: 10px; padding: 0 0 14px; }
-.word-row.open .word-extra { display: none; }
+/* While one word is open, the rest of the list steps back */
+.word-list.editing .word-row { opacity: .45; }
+
+/* The word being edited: an inset card with a small hard shadow */
+.word-card {
+  display: grid; gap: 14px; margin: 10px 0 14px; padding: 16px 14px;
+  background: var(--paper); border: 2px solid var(--ink); border-radius: 18px;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.word-card-head { display: grid; gap: 0; }
+.word-card .field { gap: 4px; }
+.field-label { font-weight: 600; }
+.field-help { font-size: var(--t-sm); font-weight: 400; color: var(--ink-soft); line-height: 1.4; }
+.word-card .form-error { margin-top: -8px; }
+.word-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.saved-status { font-size: var(--t-sm); font-weight: 600; color: var(--leaf); min-height: 1.4em; }
+.word-foot .btn { flex: none; min-height: 44px; box-shadow: 3px 3px 0 var(--kumkum); }
 
 .paste-box { display: grid; gap: 10px; margin-top: 4px; }
 #btn-paste-toggle { align-self: flex-start; margin-top: 6px; padding-left: 0; }

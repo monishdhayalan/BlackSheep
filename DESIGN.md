@@ -70,7 +70,18 @@ Turmeric with a kolam dot grid: `radial-gradient` dots at 22px spacing, fixed. D
 
 ## Components to reuse
 
-Use these before creating anything new: `.panel`, `.panel-head` with `.mini` text buttons, `.btn` / `.btn.primary` / `.btn.ghost` / `.btn.big`, `.chip` / `.chip.on` / `.chip-sub`, `.own-chip` + `.chip-edit` (custom categories), `.row` + `.toggle` switch, `.stepper`, `.name-row`, `.field`, `.quick-add`, `.word-row`, `.link` / `.link.danger`, `.back`, `.banner` / `.banner.reveal` / `.reveal.imposter`, `.translit`, `.hint` / `.hint-word`, `.actions`, `.stage`, `.progress`.
+Use these before creating anything new: `.panel`, `.panel-head` with `.mini` text buttons, `.btn` / `.btn.primary` / `.btn.ghost` / `.btn.big`, `.chip` / `.chip.on` / `.chip-sub`, `.own-chip` + `.chip-edit` (custom categories), `.row` + `.toggle` switch, `.stepper`, `.name-row`, `.field`, `.quick-add`, `.word-row` + `.word-edit`, `.word-card` (edit one word), `.field-label` / `.field-help`, `.saved-status`, `.link` / `.link.danger`, `.back`, `.banner` / `.banner.reveal` / `.reveal.imposter`, `.translit`, `.hint` / `.hint-word`, `.actions`, `.stage`, `.progress`.
+
+### Editing one item in a list
+
+When a list item has optional details, such as a custom word's Thanglish and hint:
+
+- The closed row shows what's filled in on short separate lines ("Thanglish: …", "Hint: …"), or a muted "No Thanglish or hint yet".
+- On the right is a pill `.word-edit` button labelled "Edit" or "Add details", then the remove ×. Tapping the row text opens it too.
+- Only one item is open at a time. It becomes a `.word-card`: paper background, 2px ink border, 18px radius, `4px 4px 0 var(--ink)` shadow, headed "Editing <item>". The rest of the list dims to 45% opacity.
+- Every field has a visible `.field-label`, and a `.field-help` line where it helps. Enter moves to the next field and closes the card on the last one.
+- Changes save as you type, and a green "Saved" `.saved-status` (aria-live) confirms it. A compact primary "Done" closes the card and returns focus to that item's Edit button.
+- A freshly added item gets a gentle prompt ("Add Thanglish or a hint?") instead of opening automatically, so quick entry stays fast.
 
 ## Motion
 
